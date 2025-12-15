@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    programs: Program;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +79,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    programs: ProgramsSelect<false> | ProgramsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -158,6 +160,65 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "programs".
+ */
+export interface Program {
+  id: number;
+  name: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Connect programs that are part of the same network or organization
+   */
+  relatedPrograms?: (number | Program)[] | null;
+  religiousAffiliation: 'protestant' | 'catholic';
+  /**
+   * Street address
+   */
+  address: string;
+  city: string;
+  /**
+   * Two-letter state code (e.g., CA, NY)
+   */
+  state: string;
+  zipCode: string;
+  /**
+   * Geocoded from address - can be auto-populated
+   */
+  coordinates?: {
+    lat?: number | null;
+    lng?: number | null;
+  };
+  meetingFormat: 'in-person' | 'online' | 'both';
+  meetingFrequency: 'weekly' | 'monthly' | 'quarterly';
+  meetingLength: '1-2' | '2-4' | '4-8';
+  meetingType: 'peer-group' | 'forum' | 'small-group';
+  averageAttendance: '1-10' | '10-20' | '20-50' | '50-100' | '100+';
+  hasConferences?: ('none' | 'annual' | 'multiple') | null;
+  hasOutsideSpeakers?: boolean | null;
+  hasEducationTraining?: boolean | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  website?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -187,6 +248,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'programs';
+        value: number | Program;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -267,6 +332,40 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "programs_select".
+ */
+export interface ProgramsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  relatedPrograms?: T;
+  religiousAffiliation?: T;
+  address?: T;
+  city?: T;
+  state?: T;
+  zipCode?: T;
+  coordinates?:
+    | T
+    | {
+        lat?: T;
+        lng?: T;
+      };
+  meetingFormat?: T;
+  meetingFrequency?: T;
+  meetingLength?: T;
+  meetingType?: T;
+  averageAttendance?: T;
+  hasConferences?: T;
+  hasOutsideSpeakers?: T;
+  hasEducationTraining?: T;
+  contactEmail?: T;
+  contactPhone?: T;
+  website?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

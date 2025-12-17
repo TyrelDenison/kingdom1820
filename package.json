@@ -6,8 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=\"--no-deprecation --max-old-space-size=8000\" next build",
-    "deploy": "pnpm run deploy:database && pnpm run deploy:app",
+    "deploy": "pnpm run deploy:database && pnpm run deploy:app && pnpm run deploy:cron",
     "deploy:app": "opennextjs-cloudflare build --env=$CLOUDFLARE_ENV && opennextjs-cloudflare deploy --env=$CLOUDFLARE_ENV",
+    "deploy:cron": "wrangler deploy --config wrangler.cron.jsonc --env=$CLOUDFLARE_ENV",
     "deploy:database": "cross-env NODE_ENV=production PAYLOAD_SECRET=ignore payload migrate && wrangler d1 execute D1 --command 'PRAGMA optimize' --env=$CLOUDFLARE_ENV --remote",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "devsafe": "rm -rf .next && rm -rf .open-next && cross-env NODE_OPTIONS=--no-deprecation next dev",
@@ -52,6 +53,7 @@
     "playwright": "1.56.1",
     "playwright-core": "1.56.1",
     "prettier": "^3.4.2",
+    "tsx": "^4.21.0",
     "typescript": "5.7.3",
     "vite-tsconfig-paths": "5.1.4",
     "vitest": "3.2.3",

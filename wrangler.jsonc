@@ -20,6 +20,7 @@
 			"binding": "D1",
 			"database_id": "a68aeb6d-c81b-48f5-af4f-4974ff3f0ca5",
 			"database_name": "kingdom1820-db",
+			"remote": true
 		},
 	],
 	"services": [

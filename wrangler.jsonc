@@ -41,6 +41,14 @@
 		//   "bucket_name": "<BUCKET_NAME>",
 		// },
 	],
+	"queues": {
+		"producers": [
+			{
+				"binding": "SCRAPE_QUEUE",
+				"queue": "kingdom1820-scrape-queue"
+			}
+		]
+	},
 	// Here's how to configure an additional environment
 	// It can be deployed with `CLOUDFLARE_ENV=staging pnpm run deploy`
 	// "env": {

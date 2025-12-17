@@ -66,7 +66,7 @@ export const Programs: CollectionConfig = {
       admin: {
         description: 'Two-letter state code (e.g., CA, NY)',
       },
-      validate: (val) => {
+      validate: (val: string) => {
         if (val && !/^[A-Z]{2}$/.test(val)) {
           return 'Please enter a two-letter state code'
         }
@@ -78,7 +78,7 @@ export const Programs: CollectionConfig = {
       name: 'zipCode',
       type: 'text',
       required: true,
-      validate: (val) => {
+      validate: (val: string) => {
         if (!/^\d{5}(-\d{4})?$/.test(val)) {
           return 'Please enter a valid ZIP code'
         }
@@ -206,6 +206,14 @@ export const Programs: CollectionConfig = {
     {
       name: 'website',
       type: 'text',
+    },
+    {
+      name: 'sourceUrl',
+      type: 'text',
+      admin: {
+        description: 'URL where this program data was scraped from',
+        readOnly: true,
+      },
     },
   ],
 }

@@ -11,6 +11,7 @@ import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Programs } from './collections/Programs'
 import { ScrapeJobs } from './collections/ScrapeJobs'
+import { AgentPrompts } from './collections/AgentPrompts'
 import { ScraperSettings } from './globals/ScraperSettings'
 
 const filename = fileURLToPath(import.meta.url)
@@ -31,7 +32,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, Programs, ScrapeJobs],
+  collections: [Users, Media, Programs, ScrapeJobs, AgentPrompts],
   globals: [ScraperSettings],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',

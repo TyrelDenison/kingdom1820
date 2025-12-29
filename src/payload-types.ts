@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     programs: Program;
     'scrape-jobs': ScrapeJob;
+    'agent-prompts': AgentPrompt;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     programs: ProgramsSelect<false> | ProgramsSelect<true>;
     'scrape-jobs': ScrapeJobsSelect<false> | ScrapeJobsSelect<true>;
+    'agent-prompts': AgentPromptsSelect<false> | AgentPromptsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -263,6 +265,30 @@ export interface ScrapeJob {
   createdAt: string;
 }
 /**
+ * Manage prompts for the Firecrawl agent endpoint
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-prompts".
+ */
+export interface AgentPrompt {
+  id: number;
+  /**
+   * A descriptive title for this agent prompt
+   */
+  title: string;
+  /**
+   * The prompt text to send to the Firecrawl agent
+   */
+  prompt: string;
+  /**
+   * Set to Active to use this prompt in production
+   */
+  status: 'draft' | 'active';
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -301,6 +327,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'scrape-jobs';
         value: number | ScrapeJob;
+      } | null)
+    | ({
+        relationTo: 'agent-prompts';
+        value: number | AgentPrompt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -441,6 +471,18 @@ export interface ScrapeJobsSelect<T extends boolean = true> {
   errorLog?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-prompts_select".
+ */
+export interface AgentPromptsSelect<T extends boolean = true> {
+  title?: T;
+  prompt?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

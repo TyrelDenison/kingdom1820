@@ -39,9 +39,17 @@ export const AgentPrompts: CollectionConfig = {
           label: 'Active',
           value: 'active',
         },
+        {
+          label: 'Processing',
+          value: 'processing',
+        },
+        {
+          label: 'Errored',
+          value: 'errored',
+        },
       ],
       admin: {
-        description: 'Set to Active to use this prompt in production',
+        description: 'Processing state managed automatically during execution',
         position: 'sidebar',
       },
     },

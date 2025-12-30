@@ -988,7 +988,7 @@ export async function up({ payload }: MigrateUpArgs): Promise<void> {
   for (const program of MOCK_PROGRAMS) {
     await payload.create({
       collection: 'programs',
-      data: program,
+      data: program as any,
     })
   }
 

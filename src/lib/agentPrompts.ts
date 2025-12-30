@@ -158,11 +158,21 @@ export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptRe
       failed: stats.failed,
     })
 
-    // On success, set status back to active
+    // On success, set status back to active and save results
     await payload.update({
       collection: 'agent-prompts',
       id: promptId,
-      data: { status: 'active' },
+      data: {
+        status: 'active',
+        lastRun: {
+          timestamp: new Date().toISOString(),
+          total: stats.total,
+          created: stats.created,
+          updated: stats.updated,
+          failed: stats.failed,
+          errors: stats.errors.length > 0 ? stats.errors : undefined,
+        },
+      },
     })
 
     return stats
@@ -170,11 +180,24 @@ export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptRe
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     console.error('Agent prompt run failed:', errorMessage)
 
-    // On error, set status to errored
+    // On error, set status to errored and save error state
     await payload.update({
       collection: 'agent-prompts',
       id: promptId,
-      data: { status: 'errored' },
+      data: {
+        status: 'errored',
+        lastRun: {
+          timestamp: new Date().toISOString(),
+          total: stats.total,
+          created: stats.created,
+          updated: stats.updated,
+          failed: stats.failed + 1,
+          errors: [
+            ...stats.errors,
+            { error: errorMessage },
+          ],
+        },
+      },
     })
 
     throw new Error(`Failed to run agent prompt: ${errorMessage}`)

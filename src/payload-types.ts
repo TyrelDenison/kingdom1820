@@ -247,6 +247,18 @@ export interface AgentPrompt {
    * Maximum Firecrawl credits to spend on this agent run. Leave empty for no limit.
    */
   maxCredits?: number | null;
+  /**
+   * Results from the most recent agent prompt execution
+   */
+  lastRun?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -415,6 +427,7 @@ export interface AgentPromptsSelect<T extends boolean = true> {
   prompt?: T;
   status?: T;
   maxCredits?: T;
+  lastRun?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

@@ -481,6 +481,51 @@ If you encounter references to these in old code, they should be removed or upda
 
 ## Best Practices
 
+### API Endpoints
+
+**IMPORTANT: Always use Payload-native custom endpoints, not Next.js API routes.**
+
+Payload collections support custom endpoints that integrate with Payload's auth, permissions, and request context:
+
+```typescript
+// ✅ CORRECT: Payload custom endpoint
+export const MyCollection: CollectionConfig = {
+  slug: 'my-collection',
+  endpoints: [
+    {
+      path: '/:id/custom-action',
+      method: 'post',
+      handler: async (req) => {
+        const { id } = req.routeParams
+        const { payload, user } = req  // Access Payload context
+        // ... your logic here
+        return Response.json({ success: true })
+      },
+    },
+  ],
+  // ... rest of config
+}
+```
+
+**URL Pattern:** `/api/{collection-slug}/{endpoint-path}`
+
+Example: `POST /api/agent-prompts/123/execute`
+
+**Why use Payload endpoints?**
+- ✅ Automatic auth/permissions integration
+- ✅ Access to Payload context (req.payload, req.user)
+- ✅ Consistent with Payload architecture
+- ✅ No need for manual session verification
+
+**Avoid:**
+```typescript
+// ❌ INCORRECT: Next.js API route
+// src/app/api/my-collection/[id]/route.ts
+export async function POST(req) { ... }
+```
+
+Next.js API routes should only be used for non-Payload endpoints (webhooks, third-party integrations, etc.).
+
 ### Working with Agent Prompts
 
 1. **Be Specific**: Clearly list all required fields in the prompt

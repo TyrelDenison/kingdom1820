@@ -1,101 +1,243 @@
-# Payload Cloudflare Template
+# Kingdom1820 - Faith-Based Programs Directory
+
+A Next.js application built with Payload CMS and deployed on Cloudflare Workers. This platform helps discover and connect with Christian business peer advisory groups across the United States.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/payloadcms/payload/tree/main/templates/with-cloudflare-d1)
 
-**This can only be deployed on Paid Workers right now due to size limits.** This template comes configured with the bare minimum to get started on anything you need.
+**Note: This can only be deployed on Paid Workers right now due to size limits.**
 
-## Quick start
+## Overview
 
-This template can be deployed directly to Cloudflare Workers by clicking the button to take you to the setup screen.
+Kingdom1820 provides a searchable directory of faith-based professional development programs, with an emphasis on Christian business peer advisory groups. The platform features automated data collection via AI-powered web scraping and a user-friendly interface for browsing and filtering programs.
 
-From there you can connect your code to a git provider such Github or Gitlab, name your Workers, D1 Database and R2 Bucket as well as attach any additional environment variables or services you need.
+## Key Features
 
-## Quick Start - local setup
+- 🔍 **Advanced Search & Filtering** - Find programs by location, meeting format, frequency, and religious affiliation
+- 🤖 **AI-Powered Data Extraction** - Automated program discovery using Firecrawl's agent endpoint
+- 📊 **Comprehensive Program Data** - Meeting details, contact info, features, and more
+- 🎨 **Professional Design** - Clean, responsive interface with indigo (#560591) color scheme
+- ☁️ **Cloudflare Infrastructure** - Deployed on Workers with D1 database and R2 storage
 
-To spin up this template locally, follow these steps:
+## Collections
 
-### Clone
+### Programs
+The main collection storing information about faith-based professional programs:
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. Cloudflare will connect your app to a git provider such as Github and you can access your code from there.
+**Core Information:**
+- Name, description
+- Religious affiliation (Protestant/Catholic)
+- Complete address with geocoded coordinates
 
-### Local Development
+**Meeting Details:**
+- Format (In-person, Online, Both)
+- Frequency (Weekly, Monthly, Quarterly)
+- Length (1-2, 2-4, 4-8 hours)
+- Type (Peer group, Forum, Small group)
+- Average attendance
 
-## How it works
+**Additional Features:**
+- Conference offerings (None, Annual, Multiple)
+- Outside speakers availability
+- Education/training programs
 
-Out of the box, using [`Wrangler`](https://developers.cloudflare.com/workers/wrangler/) will automatically create local bindings for you to connect to the remote services and it can even create a local mock of the services you're using with Cloudflare.
+**Contact Information:**
+- Email, phone, website
+- Source URLs with citations
 
-We've pre-configured Payload for you with the following:
+### AgentPrompts
+Manages prompts for the Firecrawl AI agent to extract program data:
 
-### Collections
+- **Title** - Descriptive name for the prompt
+- **Prompt** - Natural language instructions for data extraction
+- **Status** - Draft or Active
+- **Max Credits** - Optional spending limit per execution
+- **Version History** - Full tracking of prompt iterations
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+### Users
+Authentication-enabled collection for admin panel access.
 
-- #### Users (Authentication)
+### Media
+Upload and storage collection for images using R2.
 
-  Users are auth-enabled collections that have access to the admin panel.
+## AI-Powered Data Extraction
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+Kingdom1820 uses [Firecrawl](https://firecrawl.dev)'s agent endpoint to autonomously discover and extract program data from across the web.
 
-- #### Media
+### How It Works
 
-  This is the uploads enabled collection.
+1. **Agent Prompts** are created in the admin panel with natural language instructions
+2. The Firecrawl agent **autonomously searches** the web based on the prompt
+3. Data is **extracted and validated** against a Zod schema
+4. Programs are **automatically saved** as drafts with citations
+5. Duplicates are **intelligently updated** based on name, city, and state
 
-### Image Storage (R2)
+### Running an Agent Prompt
 
-Images will be served from an R2 bucket which you can then further configure to use a CDN to serve for your frontend directly.
+```typescript
+import { runAgentPrompt } from '@/lib/agentPrompts'
 
-### D1 Database
+// Execute a prompt by ID
+const result = await runAgentPrompt(promptId)
 
-The Worker will have direct access to a D1 SQLite database which Wrangler can connect locally to, just note that you won't have a connection string as you would typically with other providers.
+// Returns statistics:
+// {
+//   total: 100,      // Programs found by agent
+//   created: 65,     // New programs created
+//   updated: 35,     // Existing programs updated
+//   failed: 0,       // Failed saves
+//   errors: []       // Error details
+// }
+```
 
-You can enable read replicas by adding `readReplicas: 'first-primary'` in the DB adapter and then enabling it on your D1 Cloudflare dashboard. Read more about this feature on [our docs](https://payloadcms.com/docs/database/sqlite#d1-read-replicas).
+### Citation Tracking
+
+The agent automatically provides citations for all extracted data. Citations are stored in the `sourceUrl` field as a JSON array:
+
+```json
+["https://www.c12group.com/locations", "https://www.example.com/directory"]
+```
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **CMS**: Payload CMS 3.63
+- **Database**: Cloudflare D1 (SQLite)
+- **Storage**: Cloudflare R2
+- **Deployment**: Cloudflare Workers
+- **Data Extraction**: Firecrawl AI Agent
+- **Validation**: Zod schemas
+- **Styling**: CSS with modern features
+
+## Quick Start - Local Setup
+
+### Prerequisites
+
+- Node.js 18.20.2+ or 20.9.0+
+- pnpm 9 or 10
+- Cloudflare account
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+3. Set up environment variables in `.env`:
+   ```bash
+   PAYLOAD_SECRET=your-secret-here
+   FIRECRAWL_API_KEY=your-firecrawl-key
+   ```
+
+4. Authenticate with Wrangler:
+   ```bash
+   pnpm wrangler login
+   ```
+
+5. Run database migrations:
+   ```bash
+   pnpm payload migrate
+   ```
+
+6. Start development server:
+   ```bash
+   pnpm dev
+   ```
+
+The app will be available at `http://localhost:3000` and the admin panel at `http://localhost:3000/admin`.
 
 ## Working with Cloudflare
 
-Firstly, after installing dependencies locally you need to authenticate with Wrangler by running:
+Wrangler automatically binds your Cloudflare services for local development. It will create local mock services when running `pnpm dev`.
 
+For available Wrangler commands, run:
 ```bash
-pnpm wrangler login
+pnpm wrangler help
 ```
 
-This will take you to Cloudflare to login and then you can use the Wrangler CLI locally for anything, use `pnpm wrangler help` to see all available options.
+## Deployment
 
-Wrangler is pretty smart so it will automatically bind your services for local development just by running `pnpm dev`.
+1. Create your migrations:
+   ```bash
+   pnpm payload migrate:create
+   ```
 
-## Deployments
+2. Deploy to Cloudflare:
+   ```bash
+   pnpm run deploy
+   ```
 
-When you're ready to deploy, first make sure you have created your migrations:
+This will:
+- Run migrations against production D1
+- Build the application
+- Deploy to Cloudflare Workers
 
-```bash
-pnpm payload migrate:create
+You can integrate these steps into your CI/CD pipeline.
+
+## Database Migrations
+
+When making schema changes:
+
+1. Update collection definitions in `src/collections/`
+2. Generate migration:
+   ```bash
+   pnpm payload migrate:create
+   ```
+3. Review generated migration in `src/migrations/`
+4. Run migration:
+   ```bash
+   pnpm payload migrate
+   ```
+
+## Environment Variables
+
+Required environment variables:
+
+- `PAYLOAD_SECRET` - Secret key for Payload CMS (generate with `openssl rand -hex 32`)
+- `FIRECRAWL_API_KEY` - API key for Firecrawl service
+- `CLOUDFLARE_ENV` - Environment name (optional, for deployments)
+- `CRON_SECRET` - Secret for cron job authentication (optional)
+
+## Project Structure
+
+```
+src/
+├── app/
+│   ├── (frontend)/        # Public-facing pages
+│   │   ├── page.tsx       # Home page
+│   │   └── programs/      # Program search and detail pages
+│   └── api/               # API routes (reserved for future use)
+├── collections/           # Payload CMS collections
+│   ├── Programs.ts        # Main program data
+│   ├── AgentPrompts.ts    # AI extraction prompts
+│   ├── Users.ts           # Authentication
+│   └── Media.ts           # File uploads
+├── lib/
+│   ├── firecrawl.ts       # Firecrawl service with Zod schemas
+│   └── agentPrompts.ts    # Agent execution utility
+├── migrations/            # Database migrations
+└── payload.config.ts      # Payload CMS configuration
 ```
 
-Then run the following command:
-
-```bash
-pnpm run deploy
-```
-
-This will spin up Wrangler in `production` mode, run any created migrations, build the app and then deploy the bundle up to Cloudflare.
-
-That's it! You can if you wish move these steps into your CI pipeline as well.
-
-## Enabling logs
-
-By default logs are not enabled for your API, we've made this decision because it does run against your quota so we've left it opt-in. But you can easily enable logs in one click in the Cloudflare panel, [see docs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/#enable-workers-logs).
-
-## Known issues
+## Known Issues
 
 ### GraphQL
+Full GraphQL support is not guaranteed when deployed due to [upstream Workers issues](https://github.com/cloudflare/workerd/issues/5175).
 
-We are currently waiting on some issues with GraphQL to be [fixed upstream in Workers](https://github.com/cloudflare/workerd/issues/5175) so full support for GraphQL is not currently guaranteed when deployed.
+### Worker Size Limits
+This template requires the Paid Workers plan due to [bundle size limits](https://developers.cloudflare.com/workers/platform/limits/#worker-size) (3MB). Keep library imports minimal to avoid hitting limits.
 
-### Worker size limits
+## Observability
 
-We currently recommend deploying this template to the Paid Workers plan due to bundle [size limits](https://developers.cloudflare.com/workers/platform/limits/#worker-size) of 3mb. We're actively trying to reduce our bundle footprint over time to better meet this metric.
+Enable logs in the Cloudflare dashboard to monitor your application. [See docs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/#enable-workers-logs) for instructions.
 
-This also applies to your own code, in the case of importing a lot of libraries you may find yourself limited by the bundle.
+## Support
 
-## Questions
+If you have questions or issues:
+- Join the [Payload Discord](https://discord.com/invite/payload)
+- Start a [GitHub Discussion](https://github.com/payloadcms/payload/discussions)
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+## License
+
+MIT

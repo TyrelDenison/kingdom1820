@@ -1,12 +1,76 @@
 import { CollectionConfig } from 'payload'
+import { runAgentPrompt } from '@/lib/agentPrompts'
 
 export const AgentPrompts: CollectionConfig = {
   slug: 'agent-prompts',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'status', 'lastRun', 'updatedAt'],
+    defaultColumns: ['title', 'status', 'actions', 'lastRun', 'updatedAt'],
     description: 'Manage prompts for the Firecrawl agent endpoint',
+    components: {
+      edit: {
+        beforeDocumentControls: ['src/components/admin/RunAgentPromptButton'],
+      },
+    },
   },
+  endpoints: [
+    {
+      path: '/:id/execute',
+      method: 'post',
+      handler: async (req) => {
+        try {
+          const { id } = req.routeParams as { id?: string }
+
+          if (!id) {
+            return Response.json(
+              { error: 'Invalid prompt ID' },
+              { status: 400 }
+            )
+          }
+
+          const promptId = parseInt(id, 10)
+
+          if (isNaN(promptId)) {
+            return Response.json(
+              { error: 'Invalid prompt ID' },
+              { status: 400 }
+            )
+          }
+
+          // Verify prompt exists and is active
+          const prompt = await req.payload.findByID({
+            collection: 'agent-prompts',
+            id: promptId,
+          })
+
+          if (!prompt) {
+            return Response.json(
+              { error: 'Prompt not found' },
+              { status: 404 }
+            )
+          }
+
+          if (prompt.status !== 'active') {
+            return Response.json(
+              { error: 'Only active prompts can be executed' },
+              { status: 400 }
+            )
+          }
+
+          // Execute the agent prompt
+          const result = await runAgentPrompt(promptId)
+
+          return Response.json(result)
+        } catch (error) {
+          console.error('Error executing agent prompt:', error)
+          return Response.json(
+            { error: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+          )
+        }
+      },
+    },
+  ],
   fields: [
     {
       name: 'title',
@@ -71,6 +135,15 @@ export const AgentPrompts: CollectionConfig = {
         components: {
           Field: 'src/components/admin/LastRunDisplay',
           Cell: 'src/components/admin/LastRunCell',
+        },
+      },
+    },
+    {
+      name: 'actions',
+      type: 'ui',
+      admin: {
+        components: {
+          Cell: 'src/components/admin/AgentPromptActions',
         },
       },
     },

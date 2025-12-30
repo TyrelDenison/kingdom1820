@@ -240,9 +240,9 @@ export interface AgentPrompt {
    */
   prompt: string;
   /**
-   * Set to Active to use this prompt in production
+   * Processing state managed automatically during execution
    */
-  status: 'draft' | 'active';
+  status: 'draft' | 'active' | 'processing' | 'errored';
   /**
    * Maximum Firecrawl credits to spend on this agent run. Leave empty for no limit.
    */

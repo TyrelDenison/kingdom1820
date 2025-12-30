@@ -5,7 +5,7 @@ export const AgentPrompts: CollectionConfig = {
   slug: 'agent-prompts',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'status', 'actions', 'updatedAt'],
+    defaultColumns: ['title', 'status', 'actions', 'lastRun', 'updatedAt'],
     description: 'Manage prompts for the Firecrawl agent endpoint',
     components: {
       edit: {
@@ -125,6 +125,18 @@ export const AgentPrompts: CollectionConfig = {
         position: 'sidebar',
       },
       min: 0,
+    },
+    {
+      name: 'lastRun',
+      type: 'json',
+      admin: {
+        description: 'Results from the most recent agent prompt execution',
+        readOnly: true,
+        components: {
+          Field: 'src/components/admin/LastRunDisplay',
+          Cell: 'src/components/admin/LastRunCell',
+        },
+      },
     },
     {
       name: 'actions',

@@ -57,3 +57,5 @@ export const AgentPromptActions: React.FC<{
     </div>
   )
 }
+
+export default AgentPromptActions

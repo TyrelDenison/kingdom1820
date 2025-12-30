@@ -73,3 +73,5 @@ export const RunAgentPromptButton: React.FC = () => {
     </Button>
   )
 }
+
+export default RunAgentPromptButton

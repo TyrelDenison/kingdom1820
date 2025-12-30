@@ -70,3 +70,5 @@ export const LastRunDisplay: React.FC<{
     </div>
   )
 }
+
+export default LastRunDisplay

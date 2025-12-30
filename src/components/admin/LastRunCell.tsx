@@ -46,3 +46,5 @@ export const LastRunCell: React.FC<{ cellData: any }> = ({ cellData }) => {
     </div>
   )
 }
+
+export default LastRunCell

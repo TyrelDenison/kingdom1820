@@ -70,7 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     programs: Program;
-    'scrape-jobs': ScrapeJob;
+    'agent-prompts': AgentPrompt;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -81,7 +81,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     programs: ProgramsSelect<false> | ProgramsSelect<true>;
-    'scrape-jobs': ScrapeJobsSelect<false> | ScrapeJobsSelect<true>;
+    'agent-prompts': AgentPromptsSelect<false> | AgentPromptsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -90,12 +90,8 @@ export interface Config {
   db: {
     defaultIDType: number;
   };
-  globals: {
-    'scraper-settings': ScraperSetting;
-  };
-  globalsSelect: {
-    'scraper-settings': ScraperSettingsSelect<false> | ScraperSettingsSelect<true>;
-  };
+  globals: {};
+  globalsSelect: {};
   locale: null;
   user: User & {
     collection: 'users';
@@ -228,39 +224,32 @@ export interface Program {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Manage prompts for the Firecrawl agent endpoint
+ *
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "scrape-jobs".
+ * via the `definition` "agent-prompts".
  */
-export interface ScrapeJob {
+export interface AgentPrompt {
   id: number;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  jobType: 'extract' | 'crawl';
   /**
-   * URLs to scrape (for extract mode)
+   * A descriptive title for this agent prompt
    */
-  urls?:
-    | {
-        url: string;
-        status?: ('pending' | 'processing' | 'success' | 'failed') | null;
-        programId?: (number | null) | Program;
-        error?: string | null;
-        id?: string | null;
-      }[]
-    | null;
+  title: string;
   /**
-   * Base URL to crawl (for crawl mode)
+   * The prompt text to send to the Firecrawl agent
    */
-  crawlUrl?: string | null;
-  totalUrls?: number | null;
-  processedUrls?: number | null;
-  successfulUrls?: number | null;
-  failedUrls?: number | null;
+  prompt: string;
   /**
-   * General error messages for the job
+   * Set to Active to use this prompt in production
    */
-  errorLog?: string | null;
+  status: 'draft' | 'active';
+  /**
+   * Maximum Firecrawl credits to spend on this agent run. Leave empty for no limit.
+   */
+  maxCredits?: number | null;
   updatedAt: string;
   createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -299,8 +288,8 @@ export interface PayloadLockedDocument {
         value: number | Program;
       } | null)
     | ({
-        relationTo: 'scrape-jobs';
-        value: number | ScrapeJob;
+        relationTo: 'agent-prompts';
+        value: number | AgentPrompt;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -419,28 +408,16 @@ export interface ProgramsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "scrape-jobs_select".
+ * via the `definition` "agent-prompts_select".
  */
-export interface ScrapeJobsSelect<T extends boolean = true> {
+export interface AgentPromptsSelect<T extends boolean = true> {
+  title?: T;
+  prompt?: T;
   status?: T;
-  jobType?: T;
-  urls?:
-    | T
-    | {
-        url?: T;
-        status?: T;
-        programId?: T;
-        error?: T;
-        id?: T;
-      };
-  crawlUrl?: T;
-  totalUrls?: T;
-  processedUrls?: T;
-  successfulUrls?: T;
-  failedUrls?: T;
-  errorLog?: T;
+  maxCredits?: T;
   updatedAt?: T;
   createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -481,60 +458,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "scraper-settings".
- */
-export interface ScraperSetting {
-  id: number;
-  /**
-   * When enabled, queued scraping jobs will be processed automatically
-   */
-  enabled?: boolean | null;
-  /**
-   * How often to check for and process queued jobs
-   */
-  frequency: '1' | '2' | '5' | '10' | '15' | '30' | '60';
-  /**
-   * Number of URLs to process per batch (1-20)
-   */
-  batchSize: number;
-  /**
-   * Last time the scraper processed jobs
-   */
-  lastRun?: string | null;
-  /**
-   * Wait time between processing each URL (0-60 seconds)
-   */
-  delayBetweenRequests: number;
-  /**
-   * Maximum number of scraping jobs to process simultaneously
-   */
-  maxConcurrent: number;
-  totalProcessed?: number | null;
-  totalSuccessful?: number | null;
-  totalFailed?: number | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "scraper-settings_select".
- */
-export interface ScraperSettingsSelect<T extends boolean = true> {
-  enabled?: T;
-  frequency?: T;
-  batchSize?: T;
-  lastRun?: T;
-  delayBetweenRequests?: T;
-  maxConcurrent?: T;
-  totalProcessed?: T;
-  totalSuccessful?: T;
-  totalFailed?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

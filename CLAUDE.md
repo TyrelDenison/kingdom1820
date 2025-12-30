@@ -46,12 +46,21 @@ src/
 │   │   │   ├── Header.tsx       # Site-wide navigation
 │   │   │   └── ProgramCard.tsx  # Reusable program card
 │   │   └── styles.css           # Global styles (indigo theme)
+│   ├── (payload)/               # Payload admin routes (Next.js route group)
+│   │   └── admin/
+│   │       └── importMap.js     # Auto-generated component map
 │   └── api/                     # Reserved for future API routes
 ├── collections/
 │   ├── Programs.ts              # Main program data collection
 │   ├── AgentPrompts.ts          # AI extraction prompts collection
 │   ├── Users.ts                 # Admin authentication
 │   └── Media.ts                 # R2 file uploads
+├── components/
+│   └── admin/                   # Payload admin UI components
+│       ├── RunAgentPromptButton.tsx  # Edit view execution button
+│       ├── AgentPromptActions.tsx    # List view actions column
+│       ├── LastRunDisplay.tsx        # Edit view last run details
+│       └── LastRunCell.tsx           # List view last run cell
 ├── globals/                     # (Empty - ScraperSettings removed)
 ├── lib/
 │   ├── firecrawl.ts             # Firecrawl service + Zod schemas
@@ -107,17 +116,38 @@ Manages natural language prompts for the Firecrawl AI agent.
 {
   title: string (required)
   prompt: textarea (required, 10+ rows)
-  status: 'draft' | 'active' (required, default: 'draft')
+  status: 'draft' | 'active' | 'processing' | 'errored' (required, default: 'draft')
   maxCredits: number (optional, min: 0)
+  lastRun: json (auto, read-only)
   createdAt: timestamp (auto)
   updatedAt: timestamp (auto)
 }
 ```
 
+**Status Field:**
+- `draft` - Initial state for testing prompts
+- `active` - Ready for execution (only this status can be run)
+- `processing` - Currently executing (set automatically during run)
+- `errored` - Last execution failed (requires manual reset to active)
+
+**LastRun Field:**
+Automatically populated after each execution with:
+```typescript
+{
+  timestamp: string (ISO 8601)
+  total: number
+  created: number
+  updated: number
+  failed: number
+  errors?: Array<{ name?: string; error: string }>
+}
+```
+
 **Important Notes:**
-- Only 'active' prompts should be executed in production
+- Only 'active' prompts can be executed via UI or API
 - `maxCredits` controls Firecrawl spending limit (null = no limit)
 - Version history enabled for tracking prompt iterations
+- `lastRun` provides full execution history with error details
 
 ### Users Collection (`src/collections/Users.ts`)
 
@@ -307,10 +337,16 @@ function convertToRichText(description?: string) {
 3. `20251215_180619.ts` - Created scraper_settings (removed)
 4. `20251217_145316.ts` - Seed 50 mock programs
 5. `20251229_224933.ts` - Added agent_prompts collection
-6. `20251230_002230.ts` - **Latest: Agent migration**
+6. `20251230_002230.ts` - Agent migration
    - Drops old scraping tables
    - Adds `max_credits` to agent_prompts
    - Seeds sample agent prompt
+7. `20251230_173154.ts` - Agent status expansion
+   - Adds 'processing' and 'errored' status options
+   - Recreates agent_prompts table (SQLite limitation)
+8. `20251230_194736.ts` - **Latest: Last run tracking**
+   - Adds `last_run` JSON field to agent_prompts
+   - Adds `version_last_run` to versions table
 
 **Migration Workflow:**
 
@@ -396,7 +432,24 @@ pnpm run generate:types      # Update TypeScript types
 
 ### Executing Agent Prompts
 
-Currently manual execution via code. Future: UI button in admin panel.
+**UI Execution (Recommended):**
+
+1. **Edit View**: Click "Run Agent Prompt" button above document controls
+2. **List View**: Click "Run" button in the Actions column
+
+Both buttons:
+- Only enabled when status is 'active'
+- Show loading state during execution
+- Display results in alert dialog
+- Auto-refresh page after completion
+
+**Status Lifecycle:**
+- `draft` → Initial state for testing
+- `active` → Ready for execution (only this status can be run)
+- `processing` → Currently executing (set automatically)
+- `errored` → Last execution failed (can be reset to active manually)
+
+**Programmatic Execution:**
 
 ```typescript
 import { runAgentPrompt } from '@/lib/agentPrompts'
@@ -411,6 +464,18 @@ if (result.failed > 0) {
   console.error('Errors:', result.errors)
 }
 ```
+
+**Execution History:**
+
+The `lastRun` field automatically tracks:
+- Timestamp of execution
+- Total programs returned
+- Programs created/updated/failed
+- Error details (if any)
+
+View in:
+- Edit view: Expandable details with error list
+- List view: Compact time-ago format with stats
 
 ## API Endpoints
 
@@ -427,11 +492,19 @@ See [Payload REST API docs](https://payloadcms.com/docs/rest-api/overview).
 
 ### Custom Endpoints
 
-Currently none. Old scraping endpoints (`/api/scrape/*`) have been removed.
+**Agent Prompt Execution:**
+- `POST /api/agent-prompts/:id/execute` - Execute an agent prompt
+  - Validates status is 'active'
+  - Sets status to 'processing' during execution
+  - Returns `RunAgentPromptResult` JSON
+  - Updates `lastRun` field with results
+  - Implemented as Payload custom endpoint (not Next.js route)
 
-Future considerations:
-- `POST /api/agent-prompts/:id/execute` - Trigger agent prompt from UI
-- `GET /api/programs/search` - Enhanced search endpoint
+**Removed Endpoints:**
+- `/api/scrape/*` - Old scraping endpoints removed in favor of agent system
+
+**Future Considerations:**
+- `GET /api/programs/search` - Enhanced search endpoint with filters
 
 ## Testing
 
@@ -584,7 +657,7 @@ Next.js API routes should only be used for non-Payload endpoints (webhooks, thir
 
 Potential improvements to consider:
 
-1. **UI for Agent Execution** - Admin panel button to run prompts
+1. **Queue System for Agent Runs** - Cloudflare Queues for job processing with priority levels and scheduled execution
 2. **Scheduled Agent Runs** - Cron jobs for periodic data refresh
 3. **Citation Display** - Frontend UI to show data sources
 4. **Advanced Duplicate Detection** - Fuzzy matching, normalization

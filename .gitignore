@@ -49,6 +49,10 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 
+# Example/reference files
+example-extract-data-*.json
+sample-agent-prompt.txt
+
 # OpenNext
 .open-next
 .wrangler

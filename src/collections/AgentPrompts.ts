@@ -45,6 +45,15 @@ export const AgentPrompts: CollectionConfig = {
         position: 'sidebar',
       },
     },
+    {
+      name: 'maxCredits',
+      type: 'number',
+      admin: {
+        description: 'Maximum Firecrawl credits to spend on this agent run. Leave empty for no limit.',
+        position: 'sidebar',
+      },
+      min: 0,
+    },
   ],
   timestamps: true, // This adds createdAt and updatedAt fields automatically
   versions: {

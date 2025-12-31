@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useFormFields } from '@payloadcms/ui'
 
 interface LastRunData {
   timestamp: string
@@ -9,12 +10,16 @@ interface LastRunData {
   updated: number
   failed: number
   errors?: Array<{ name?: string; error: string }>
+  skippedPrograms?: Array<any & { skipReason: string }>
 }
 
-export const LastRunDisplay: React.FC<{
-  value?: LastRunData | null
-}> = ({ value: lastRun }) => {
+export const LastRunDisplay: React.FC = () => {
   const [showErrors, setShowErrors] = useState(false)
+  const [showSkipped, setShowSkipped] = useState(false)
+
+  // Use Payload's hook to access form field data
+  const lastRunField = useFormFields(([fields]) => fields.lastRun)
+  const lastRun = lastRunField?.value as LastRunData | null
 
   if (!lastRun) {
     return <div style={{ color: '#6b7280' }}>Never run</div>
@@ -64,6 +69,39 @@ export const LastRunDisplay: React.FC<{
                 </li>
               ))}
             </ul>
+          )}
+        </div>
+      )}
+
+      {lastRun.skippedPrograms && lastRun.skippedPrograms.length > 0 && (
+        <div style={{ marginTop: '12px' }}>
+          <button
+            onClick={() => setShowSkipped(!showSkipped)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#f59e0b',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+            }}
+          >
+            {showSkipped ? 'Hide' : 'Show'} {lastRun.skippedPrograms.length} skipped program(s)
+          </button>
+          {showSkipped && (
+            <div style={{ marginTop: '8px', fontSize: '12px' }}>
+              {lastRun.skippedPrograms.map((program, idx) => (
+                <div key={idx} style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', borderRadius: '4px' }}>
+                  <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{program.name || 'Unnamed Program'}</div>
+                  <div style={{ color: '#f59e0b', marginBottom: '4px' }}>Reason: {program.skipReason}</div>
+                  <details>
+                    <summary style={{ cursor: 'pointer', color: '#6b7280' }}>View program data</summary>
+                    <pre style={{ marginTop: '8px', fontSize: '11px', overflow: 'auto', backgroundColor: '#f9fafb', padding: '8px', borderRadius: '4px' }}>
+                      {JSON.stringify(program, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

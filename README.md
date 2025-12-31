@@ -61,15 +61,18 @@ Upload and storage collection for images using R2.
 
 ## AI-Powered Data Extraction
 
-Kingdom1820 uses [Firecrawl](https://firecrawl.dev)'s agent endpoint to autonomously discover and extract program data from across the web.
+Kingdom1820 uses the [Firecrawl SDK](https://firecrawl.dev) (@mendable/firecrawl-js) to autonomously discover and extract program data from across the web.
 
 ### How It Works
 
 1. **Agent Prompts** are created in the admin panel with natural language instructions
-2. The Firecrawl agent **autonomously searches** the web based on the prompt
-3. Data is **extracted and validated** against a Zod schema
-4. Programs are **automatically saved** as drafts with citations
-5. Duplicates are **intelligently updated** based on name, city, and state
+2. The **Firecrawl SDK** submits the prompt and automatically polls for completion
+3. The Firecrawl agent **autonomously searches** the web based on the prompt (no timeout limits)
+4. Data is **extracted and validated** against a Zod schema
+5. Programs are **automatically saved** as drafts with citations
+6. Duplicates are **intelligently updated** based on name, city, and state
+
+**Note:** The SDK handles all polling and timeout management - jobs run until Firecrawl completes them naturally.
 
 ### Running an Agent Prompt
 
@@ -104,7 +107,7 @@ The agent automatically provides citations for all extracted data. Citations are
 - **Database**: Cloudflare D1 (SQLite)
 - **Storage**: Cloudflare R2
 - **Deployment**: Cloudflare Workers
-- **Data Extraction**: Firecrawl AI Agent
+- **Data Extraction**: Firecrawl SDK (@mendable/firecrawl-js v4.10.0)
 - **Validation**: Zod schemas
 - **Styling**: CSS with modern features
 

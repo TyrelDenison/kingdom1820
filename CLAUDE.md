@@ -11,7 +11,7 @@ Kingdom1820 is a Next.js 15 application with Payload CMS 3.63, deployed on Cloud
 - Payload CMS 3.63
 - Cloudflare D1 (SQLite database)
 - Cloudflare R2 (object storage)
-- Firecrawl AI Agent (data extraction)
+- Firecrawl SDK (@mendable/firecrawl-js v4.10.0)
 - Zod (schema validation)
 - TypeScript
 
@@ -164,12 +164,12 @@ R2-backed file uploads with required alt text.
 **Key Exports:**
 
 ```typescript
-// Zod schema matching Programs collection
+// Zod schema matching Programs collection (excluding coordinates)
 export const ProgramSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   religiousAffiliation: z.enum(['protestant', 'catholic']).optional(),
-  // ... all 19 program fields
+  // ... 18 program fields (coordinates excluded - will be geocoded server-side)
 })
 
 export type ProgramData = z.infer<typeof ProgramSchema>
@@ -190,13 +190,15 @@ export function getFirecrawlService(apiKey?: string): FirecrawlService
 
 **How runAgentPrompt Works:**
 
-1. Calls Firecrawl `/agent` endpoint with prompt and schema
-2. Agent autonomously searches web based on natural language prompt
-3. Returns JSON matching schema with citation fields (e.g., `name_citation`, `address_citation`)
-4. Validates response with Zod schema
-5. Extracts all `*_citation` fields recursively
-6. Returns programs with parsed citations array
-7. Handles async jobs with polling (5-minute timeout)
+1. Uses Firecrawl SDK's `.agent()` method with prompt and schema
+2. SDK automatically submits request and polls for completion (every 2 seconds)
+3. Agent autonomously searches web based on natural language prompt
+4. Returns JSON matching schema with citation fields (e.g., `name_citation`, `address_citation`)
+5. Validates response with Zod schema
+6. Extracts all `*_citation` fields recursively
+7. Returns programs with parsed citations array
+
+**Note:** The SDK polls indefinitely until Firecrawl completes the job (no timeout). Jobs have their own expiration time managed by Firecrawl.
 
 **Response Format:**
 
@@ -241,9 +243,12 @@ interface RunAgentPromptResult {
    - Check for duplicate by `name + city + state`
    - Convert `description` string to Lexical richText format
    - Store citations as JSON array in `sourceUrl`
+   - Filter out `citations` and `coordinates` fields (not part of Programs schema)
    - If exists: Update (both draft and published)
    - If new: Create as draft
 4. Return detailed statistics
+
+**Note:** Coordinates are excluded from the agent request and filtered before saving. They will be geocoded server-side from the address in a future implementation.
 
 **Duplicate Detection:**
 
@@ -392,25 +397,19 @@ pnpm run generate:types      # Update TypeScript types
    })
    ```
 
-3. Update JSON schema in `getProgramSchemaForFirecrawl()`:
-   ```typescript
-   properties: {
-     // ...
-     newField: { type: 'string' },
-   }
-   ```
-
-4. Generate migration:
+3. Generate migration:
    ```bash
    pnpm payload migrate:create
    ```
 
-5. Update prompt to request new field
+4. Update prompt to request new field
 
-6. Regenerate types:
+5. Regenerate types:
    ```bash
    pnpm run generate:types
    ```
+
+**Note:** The Firecrawl SDK uses the Zod schema directly, so no separate JSON schema update is needed.
 
 ### Creating a New Agent Prompt
 
@@ -609,13 +608,14 @@ Next.js API routes should only be used for non-Payload endpoints (webhooks, thir
 
 ### Schema Changes
 
-1. Always update all three schemas:
+1. Always update both schemas:
    - Payload collection schema
-   - Zod validation schema
-   - Firecrawl JSON schema
+   - Zod validation schema (used by Firecrawl SDK)
 2. Generate and review migrations before running
 3. Regenerate TypeScript types after migrations
 4. Update prompts to request new fields
+
+**Note:** The Firecrawl SDK uses the Zod schema directly - no separate JSON schema needed.
 
 ### Performance
 
@@ -623,6 +623,58 @@ Next.js API routes should only be used for non-Payload endpoints (webhooks, thir
 2. **Limit Results**: Use pagination for large datasets
 3. **Cache Responses**: Consider caching for frequently accessed data
 4. **Monitor Bundle Size**: Keep imports minimal to stay under 3MB limit
+
+### Admin Components
+
+**IMPORTANT: Payload admin components MUST export a default export.**
+
+When creating custom admin components for Payload CMS (used in collection configs via string paths), you must provide both named and default exports:
+
+```typescript
+// ✅ CORRECT: Both named and default exports
+export const MyComponent: React.FC = () => {
+  return <div>My Component</div>
+}
+
+export default MyComponent
+```
+
+**Why?** Payload's admin component import system requires default exports when components are referenced by string paths in collection configuration.
+
+**Example from AgentPrompts collection:**
+```typescript
+// In collection config
+admin: {
+  components: {
+    views: {
+      edit: {
+        default: {
+          actions: ['src/components/admin/RunAgentPromptButton']  // Requires default export
+        }
+      }
+    }
+  }
+}
+```
+
+**Component Lifecycle Checks:**
+
+Some components should conditionally render based on document state:
+
+```typescript
+// RunAgentPromptButton.tsx - Don't render when creating new documents
+export const RunAgentPromptButton: React.FC = () => {
+  const { id } = useDocumentInfo()  // Payload hook
+
+  if (!id) {
+    return null  // No button when creating new document
+  }
+
+  return <Button>Run Agent Prompt</Button>
+}
+```
+
+This prevents errors when the document doesn't exist yet (e.g., during creation).
 
 ## Troubleshooting
 

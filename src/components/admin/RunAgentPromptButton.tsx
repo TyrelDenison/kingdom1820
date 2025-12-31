@@ -63,6 +63,11 @@ export const RunAgentPromptButton: React.FC = () => {
     }
   }
 
+  // Don't render button when creating a new document (id is null)
+  if (!id) {
+    return null
+  }
+
   return (
     <Button
       buttonStyle="primary"

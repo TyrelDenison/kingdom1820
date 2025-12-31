@@ -26,6 +26,7 @@
     "test:int": "cross-env NODE_OPTIONS=--no-deprecation vitest run --config ./vitest.config.mts"
   },
   "dependencies": {
+    "@mendable/firecrawl-js": "^4.10.0",
     "@opennextjs/cloudflare": "^1.11.0",
     "@payloadcms/db-d1-sqlite": "3.63.0",
     "@payloadcms/next": "3.63.0",

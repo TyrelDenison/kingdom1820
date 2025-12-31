@@ -5,13 +5,14 @@ export const AgentPrompts: CollectionConfig = {
   slug: 'agent-prompts',
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'status', 'actions', 'lastRun', 'updatedAt'],
+    defaultColumns: ['title', 'status', 'lastRun', 'updatedAt'],
     description: 'Manage prompts for the Firecrawl agent endpoint',
     components: {
       edit: {
         beforeDocumentControls: ['src/components/admin/RunAgentPromptButton'],
       },
     },
+    listSearchableFields: ['title', 'prompt'],
   },
   endpoints: [
     {

@@ -2,6 +2,7 @@
  * Firecrawl service for web scraping and data extraction using agent endpoint
  */
 
+import Firecrawl from '@mendable/firecrawl-js'
 import { z } from 'zod'
 
 /**
@@ -16,12 +17,7 @@ export const ProgramSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   zipCode: z.string().optional(),
-  coordinates: z
-    .object({
-      lat: z.number().optional(),
-      lng: z.number().optional(),
-    })
-    .optional(),
+  // Note: coordinates will be geocoded server-side from address, not requested from Firecrawl
   meetingFormat: z.enum(['in-person', 'online', 'both']).optional(),
   meetingFrequency: z.enum(['weekly', 'monthly', 'quarterly']).optional(),
   meetingLength: z.enum(['1-2', '2-4', '4-8']).optional(),
@@ -37,24 +33,6 @@ export const ProgramSchema = z.object({
 
 // Infer TypeScript type from Zod schema
 export type ProgramData = z.infer<typeof ProgramSchema>
-
-/**
- * Agent response wrapper schema
- * The agent returns data in this format
- */
-const AgentResponseSchema = z.object({
-  programs: z.array(ProgramSchema.passthrough()), // Allow citation fields to pass through
-})
-
-export interface FirecrawlAgentResponse {
-  success: boolean
-  data: {
-    programs: Array<ProgramData & Record<string, any>> // Allow citation fields
-  }
-  status?: 'processing' | 'completed' | 'failed'
-  creditsUsed?: number
-  expiresAt?: string
-}
 
 /**
  * Extract all citation URLs from a program object
@@ -77,177 +55,80 @@ export function extractCitations(obj: any, citations: Set<string> = new Set()): 
 }
 
 export class FirecrawlService {
-  private apiKey: string
-  private baseUrl = 'https://api.firecrawl.dev/v1'
+  private client: Firecrawl
 
   constructor(apiKey: string) {
-    this.apiKey = apiKey
+    this.client = new Firecrawl({ apiKey })
   }
 
   /**
    * Run an agent prompt to extract program data
    * The agent autonomously searches the web and returns structured data
+   *
+   * The SDK automatically handles:
+   * - Submitting the agent request
+   * - Polling for completion (every 2 seconds)
+   * - Returning the final result when status is completed/failed/cancelled
+   *
+   * Note: No timeout is set - the SDK will poll until Firecrawl completes the job.
+   * Firecrawl jobs have their own expiration time. If needed, jobs can be cancelled
+   * using client.cancelAgent(jobId).
    */
   async runAgentPrompt(
     prompt: string,
     maxCredits?: number,
   ): Promise<Array<ProgramData & { citations: string[] }>> {
-    const response = await fetch(`${this.baseUrl}/agent`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt,
-        schema: this.getProgramSchemaForFirecrawl(),
-        ...(maxCredits && { maxCredits }),
-      }),
+    console.log('DEBUG: Running agent prompt with SDK (no timeout)...')
+
+    // Define the schema for the agent to return
+    const responseSchema = z.object({
+      programs: z.array(ProgramSchema.passthrough()), // Allow citation fields to pass through
     })
 
-    if (!response.ok) {
-      const error = await response.text()
-      throw new Error(`Firecrawl API error: ${response.status} - ${error}`)
-    }
-
-    const result: any = await response.json()
-
-    console.log('DEBUG: Firecrawl agent response:', {
-      success: result.success,
-      status: result.status,
-      creditsUsed: result.creditsUsed,
-      programCount: result.data?.programs?.length || 0,
+    const result = await this.client.agent({
+      prompt,
+      schema: responseSchema,
+      pollInterval: 2, // Poll every 2 seconds
+      // No timeout - let Firecrawl complete the job naturally
+      ...(maxCredits && { maxCredits }),
     })
+
+    console.log('DEBUG: Firecrawl agent raw response:', JSON.stringify(result, null, 2))
 
     if (!result.success) {
       throw new Error('Firecrawl agent request failed')
     }
 
-    // If we got an ID, it's an async job - poll for results
-    if (result.id && !result.data) {
-      console.log('DEBUG: Agent job started, polling for results...')
-      return await this.pollAgentJob(result.id)
+    // This shouldn't happen since we poll indefinitely, but check anyway
+    if (result.status === 'processing') {
+      throw new Error('Agent job returned with processing status unexpectedly. Check your Firecrawl dashboard.')
     }
 
-    // Validate and parse the response
-    const validatedData = AgentResponseSchema.parse(result.data)
+    if (result.status === 'failed') {
+      throw new Error(`Agent job failed: ${result.error || 'Unknown error'}`)
+    }
+
+    if (!result.data) {
+      throw new Error('No data returned from agent')
+    }
+
+    // Log the actual data structure to debug
+    console.log('DEBUG: Agent data keys:', Object.keys(result.data as any))
+    console.log('DEBUG: Agent data:', JSON.stringify(result.data, null, 2))
+
+    // Parse the data - it should match our schema
+    const data = result.data as { programs?: Array<ProgramData & Record<string, any>> }
+
+    if (!data.programs || !Array.isArray(data.programs)) {
+      console.error('ERROR: Expected data.programs array, got:', typeof data.programs)
+      throw new Error('No programs data returned from agent')
+    }
 
     // Extract citations for each program
-    return validatedData.programs.map((program) => ({
+    return data.programs.map((program) => ({
       ...program,
       citations: extractCitations(program),
     }))
-  }
-
-  /**
-   * Poll for agent job completion
-   */
-  private async pollAgentJob(
-    jobId: string,
-  ): Promise<Array<ProgramData & { citations: string[] }>> {
-    let attempts = 0
-    const maxAttempts = 60 // 60 attempts * 5 seconds = 5 minutes max
-
-    while (attempts < maxAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 5000)) // Wait 5 seconds
-
-      const response = await fetch(`${this.baseUrl}/agent/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to check agent job status: ${response.status}`)
-      }
-
-      const status: any = await response.json()
-      console.log(`DEBUG: Agent job status (attempt ${attempts + 1}):`, status.status || 'unknown')
-
-      if (status.status === 'completed' && status.data) {
-        // Validate and parse the response
-        const validatedData = AgentResponseSchema.parse(status.data)
-
-        // Extract citations for each program
-        return validatedData.programs.map((program) => ({
-          ...program,
-          citations: extractCitations(program),
-        }))
-      }
-
-      if (status.status === 'failed') {
-        throw new Error('Agent job failed')
-      }
-
-      attempts++
-    }
-
-    throw new Error('Agent job timed out after 5 minutes')
-  }
-
-  /**
-   * Convert Zod schema to Firecrawl-compatible JSON schema format
-   */
-  private getProgramSchemaForFirecrawl() {
-    return {
-      type: 'object',
-      properties: {
-        programs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            properties: {
-              name: { type: 'string' },
-              description: { type: 'string' },
-              religiousAffiliation: {
-                type: 'string',
-                enum: ['protestant', 'catholic'],
-              },
-              address: { type: 'string' },
-              city: { type: 'string' },
-              state: { type: 'string' },
-              zipCode: { type: 'string' },
-              coordinates: {
-                type: 'object',
-                properties: {
-                  lat: { type: 'number' },
-                  lng: { type: 'number' },
-                },
-              },
-              meetingFormat: {
-                type: 'string',
-                enum: ['in-person', 'online', 'both'],
-              },
-              meetingFrequency: {
-                type: 'string',
-                enum: ['weekly', 'monthly', 'quarterly'],
-              },
-              meetingLength: {
-                type: 'string',
-                enum: ['1-2', '2-4', '4-8'],
-              },
-              meetingType: {
-                type: 'string',
-                enum: ['peer-group', 'forum', 'small-group'],
-              },
-              averageAttendance: {
-                type: 'string',
-                enum: ['1-10', '10-20', '20-50', '50-100', '100+'],
-              },
-              hasConferences: {
-                type: 'string',
-                enum: ['none', 'annual', 'multiple'],
-              },
-              hasOutsideSpeakers: { type: 'boolean' },
-              hasEducationTraining: { type: 'boolean' },
-              contactEmail: { type: 'string' },
-              contactPhone: { type: 'string' },
-              website: { type: 'string' },
-            },
-          },
-        },
-      },
-    }
   }
 }
 

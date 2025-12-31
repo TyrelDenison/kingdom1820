@@ -118,8 +118,9 @@ export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptRe
           sourceUrl: JSON.stringify(programData.citations), // Store citations as JSON array
         }
 
-        // Remove the citations field (not part of Programs schema)
-        delete (dataToSave as any).citations
+        // Remove fields that shouldn't be saved directly
+        delete (dataToSave as any).citations // Not part of Programs schema
+        delete (dataToSave as any).coordinates // Will be geocoded server-side by Payload
 
         if (existing.docs.length > 0) {
           // Update existing program

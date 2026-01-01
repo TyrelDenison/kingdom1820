@@ -10,9 +10,10 @@
 .header__content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: var(--spacing-md) 0;
   gap: var(--spacing-lg);
+  position: relative;
 }
 
 .header__logo {
@@ -22,6 +23,8 @@
   text-decoration: none;
   letter-spacing: -0.02em;
   transition: opacity 0.2s ease;
+  position: absolute;
+  left: var(--spacing-md);
 }
 
 .header__logo:hover {
@@ -32,8 +35,6 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-xl);
-  flex: 1;
-  justify-content: center;
 }
 
 .header__nav-link {

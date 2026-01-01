@@ -16,18 +16,12 @@ export function Header() {
               Home
             </Link>
             <Link href="/programs" className="header__nav-link">
-              Find Programs
+              Discover Programs
             </Link>
             <Link href="/about" className="header__nav-link">
               About
             </Link>
           </nav>
-
-          <div className="header__actions">
-            <Link href="/programs" className="btn btn-primary">
-              Search Programs
-            </Link>
-          </div>
         </div>
       </div>
     </header>

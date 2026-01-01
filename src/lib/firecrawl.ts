@@ -87,7 +87,7 @@ export class FirecrawlService {
 
     const result = await this.client.agent({
       prompt,
-      schema: responseSchema,
+      schema: responseSchema as any, // Type assertion needed for Zod schema compatibility
       pollInterval: 2, // Poll every 2 seconds
       // No timeout - let Firecrawl complete the job naturally
       ...(maxCredits && { maxCredits }),

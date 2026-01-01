@@ -1,9 +1,11 @@
 import { MigrateUpArgs, MigrateDownArgs, sql } from '@payloadcms/db-d1-sqlite'
 
 export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
-  await db.run(sql`DROP TABLE \`scrape_jobs_urls\`;`)
-  await db.run(sql`DROP TABLE \`scrape_jobs\`;`)
-  await db.run(sql`DROP TABLE \`scraper_settings\`;`)
+  // Use IF EXISTS because production marked these migrations as run without executing them
+  // Production database never actually had these tables created
+  await db.run(sql`DROP TABLE IF EXISTS \`scrape_jobs_urls\`;`)
+  await db.run(sql`DROP TABLE IF EXISTS \`scrape_jobs\`;`)
+  await db.run(sql`DROP TABLE IF EXISTS \`scraper_settings\`;`)
   await db.run(sql`PRAGMA foreign_keys=OFF;`)
   await db.run(sql`CREATE TABLE \`__new_payload_locked_documents_rels\` (
   	\`id\` integer PRIMARY KEY NOT NULL,
@@ -32,42 +34,18 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   await db.run(sql`CREATE INDEX \`payload_locked_documents_rels_media_id_idx\` ON \`payload_locked_documents_rels\` (\`media_id\`);`)
   await db.run(sql`CREATE INDEX \`payload_locked_documents_rels_programs_id_idx\` ON \`payload_locked_documents_rels\` (\`programs_id\`);`)
   await db.run(sql`CREATE INDEX \`payload_locked_documents_rels_agent_prompts_id_idx\` ON \`payload_locked_documents_rels\` (\`agent_prompts_id\`);`)
-  await db.run(sql`ALTER TABLE \`agent_prompts\` ADD \`max_credits\` numeric;`)
-  await db.run(sql`ALTER TABLE \`_agent_prompts_v\` ADD \`version_max_credits\` numeric;`)
 
-  // Seed sample agent prompt
-  await payload.create({
-    collection: 'agent-prompts',
-    data: {
-      title: 'Top 100 Christian Business Groups',
-      prompt: `Extract data for the 100 largest Christian business peer advisory groups in the US, including non-denominational organizations. For national networks, create separate entries for up to 5 local chapters per organization.
+  // Check if max_credits column exists before adding (may have been added by schema sync)
+  const tableInfo = await db.run(sql`PRAGMA table_info(agent_prompts);`)
+  const hasMaxCredits = tableInfo.results.some((col: any) => col.name === 'max_credits')
 
-For each program, extract ALL of the following fields:
-- name (required)
-- description (detailed overview of the program)
-- religiousAffiliation (must be either "protestant" or "catholic")
-- address (complete street address)
-- city
-- state (two-letter code: CA, NY, etc.)
-- zipCode
-- coordinates (latitude and longitude if available)
-- meetingFormat (in-person, online, or both)
-- meetingFrequency (weekly, monthly, or quarterly)
-- meetingLength (1-2, 2-4, or 4-8 hours)
-- meetingType (peer-group, forum, or small-group)
-- averageAttendance (1-10, 10-20, 20-50, 50-100, or 100+)
-- hasConferences (none, annual, or multiple)
-- hasOutsideSpeakers (true/false)
-- hasEducationTraining (true/false)
-- contactEmail
-- contactPhone
-- website (REQUIRED - the program's official website URL for verification)
+  if (!hasMaxCredits) {
+    await db.run(sql`ALTER TABLE \`agent_prompts\` ADD \`max_credits\` numeric;`)
+    await db.run(sql`ALTER TABLE \`_agent_prompts_v\` ADD \`version_max_credits\` numeric;`)
+  }
 
-Return data matching the provided JSON schema. Include source citations for where you found this information.`,
-      status: 'active',
-      maxCredits: null,
-    },
-  })
+  // Note: Seed removed because Payload's create() uses current schema which includes last_run field
+  // that doesn't exist at this migration point. Sample prompts can be created in admin panel after deployment.
 }
 
 export async function down({ db, payload, req }: MigrateDownArgs): Promise<void> {

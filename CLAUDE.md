@@ -413,21 +413,39 @@ pnpm run generate:types      # Update TypeScript types
 
 ### Creating a New Agent Prompt
 
+**Note:** Sample agent prompts are not seeded automatically during migrations. You must create them manually in the admin panel after deployment.
+
 1. Go to `/admin/collections/agent-prompts`
 2. Click "Create New"
 3. Set:
-   - **Title**: Descriptive name
-   - **Prompt**: Natural language instructions (see sample in `sample-agent-prompt.txt`)
-   - **Status**: Draft (test first) or Active (production)
-   - **Max Credits**: Optional limit
+   - **Title**: Descriptive name (e.g., "Top 100 Christian Business Groups")
+   - **Prompt**: Natural language instructions with specific field requirements
+   - **Status**: Draft (test first) or Active (production ready)
+   - **Max Credits**: Optional spending limit
 
-4. Test execution:
+4. Example prompt structure:
+   ```
+   Extract data for the 100 largest [target organizations].
+
+   For each program, extract ALL of the following fields:
+   - name (required)
+   - description
+   - religiousAffiliation (protestant or catholic)
+   - address, city, state, zipCode
+   - meetingFormat, meetingFrequency, meetingLength, meetingType
+   - averageAttendance, hasConferences, hasOutsideSpeakers, hasEducationTraining
+   - contactEmail, contactPhone, website
+
+   Return data matching the provided JSON schema. Include source citations.
+   ```
+
+5. Test execution:
    ```typescript
    const result = await runAgentPrompt(promptId)
    console.log(result)
    ```
 
-5. Review created/updated programs in admin panel
+6. Review created/updated programs in admin panel
 
 ### Executing Agent Prompts
 
@@ -537,6 +555,43 @@ This runs:
 **Environment-Specific:**
 ```bash
 CLOUDFLARE_ENV=production pnpm run deploy
+```
+
+**Important Post-Deployment Steps:**
+
+1. **Create Admin User**: Visit `/admin` and create your first admin user
+2. **Create Agent Prompts**: Sample prompts are not auto-seeded - create them manually in the admin panel
+3. **Verify Bindings**: Ensure D1, R2, and Queue bindings are configured in Cloudflare dashboard
+
+**Database Reset (if needed):**
+
+If you need to start fresh with a clean database:
+
+```bash
+# Create drop script
+cat > /tmp/drop_all_tables.sql << 'EOF'
+DROP TABLE IF EXISTS `payload_locked_documents_rels`;
+DROP TABLE IF EXISTS `_agent_prompts_v`;
+DROP TABLE IF EXISTS `agent_prompts`;
+DROP TABLE IF EXISTS `_programs_v_rels`;
+DROP TABLE IF EXISTS `_programs_v`;
+DROP TABLE IF EXISTS `programs_rels`;
+DROP TABLE IF EXISTS `programs`;
+DROP TABLE IF EXISTS `payload_migrations`;
+DROP TABLE IF EXISTS `payload_preferences_rels`;
+DROP TABLE IF EXISTS `payload_preferences`;
+DROP TABLE IF EXISTS `payload_locked_documents`;
+DROP TABLE IF EXISTS `media`;
+DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `users_sessions`;
+DROP TABLE IF EXISTS `payload_kv`;
+EOF
+
+# Drop all tables
+wrangler d1 execute kingdom1820-db --remote --file=/tmp/drop_all_tables.sql
+
+# Run migrations from scratch
+pnpm run deploy:database
 ```
 
 ## Removed Features

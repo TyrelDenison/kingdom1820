@@ -14,6 +14,12 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
   const [selectedFormat, setSelectedFormat] = useState('')
   const [selectedFrequency, setSelectedFrequency] = useState('')
   const [selectedAffiliation, setSelectedAffiliation] = useState('')
+  const [selectedMeetingLength, setSelectedMeetingLength] = useState('')
+  const [selectedMeetingType, setSelectedMeetingType] = useState('')
+  const [selectedAttendance, setSelectedAttendance] = useState('')
+  const [selectedConferences, setSelectedConferences] = useState('')
+  const [selectedOutsideSpeakers, setSelectedOutsideSpeakers] = useState('')
+  const [selectedEducationTraining, setSelectedEducationTraining] = useState('')
 
   // Extract unique values for filters
   const states = useMemo(() => {
@@ -34,6 +40,37 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
   const affiliations = [
     { label: 'Protestant', value: 'protestant' },
     { label: 'Catholic', value: 'catholic' },
+  ]
+
+  const meetingLengths = [
+    { label: '1-2 hours', value: '1-2' },
+    { label: '2-4 hours', value: '2-4' },
+    { label: '4-8 hours', value: '4-8' },
+  ]
+
+  const meetingTypes = [
+    { label: 'Peer Group', value: 'peer-group' },
+    { label: 'Forum', value: 'forum' },
+    { label: 'Small Group', value: 'small-group' },
+  ]
+
+  const attendanceSizes = [
+    { label: '1-10 people', value: '1-10' },
+    { label: '10-20 people', value: '10-20' },
+    { label: '20-50 people', value: '20-50' },
+    { label: '50-100 people', value: '50-100' },
+    { label: '100+ people', value: '100+' },
+  ]
+
+  const conferenceOptions = [
+    { label: 'None', value: 'none' },
+    { label: 'Annual', value: 'annual' },
+    { label: 'Multiple', value: 'multiple' },
+  ]
+
+  const booleanOptions = [
+    { label: 'Yes', value: 'true' },
+    { label: 'No', value: 'false' },
   ]
 
   // Filter programs based on search and filters
@@ -70,9 +107,47 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
         return false
       }
 
+      // Meeting length filter
+      if (selectedMeetingLength && program.meetingLength !== selectedMeetingLength) {
+        return false
+      }
+
+      // Meeting type filter
+      if (selectedMeetingType && program.meetingType !== selectedMeetingType) {
+        return false
+      }
+
+      // Average attendance filter
+      if (selectedAttendance && program.averageAttendance !== selectedAttendance) {
+        return false
+      }
+
+      // Conferences filter
+      if (selectedConferences && program.hasConferences !== selectedConferences) {
+        return false
+      }
+
+      // Outside speakers filter
+      if (selectedOutsideSpeakers) {
+        const hasOutsideSpeakers = program.hasOutsideSpeakers === true
+        const filterValue = selectedOutsideSpeakers === 'true'
+        if (hasOutsideSpeakers !== filterValue) {
+          return false
+        }
+      }
+
+      // Education training filter
+      if (selectedEducationTraining) {
+        const hasEducationTraining = program.hasEducationTraining === true
+        const filterValue = selectedEducationTraining === 'true'
+        if (hasEducationTraining !== filterValue) {
+          return false
+        }
+      }
+
       return true
     })
-  }, [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation])
+  }, [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation, selectedMeetingLength, selectedMeetingType, selectedAttendance, selectedConferences, selectedOutsideSpeakers, selectedEducationTraining])
 
   const handleClearFilters = () => {
     setSearchTerm('')
@@ -80,6 +155,12 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
     setSelectedFormat('')
     setSelectedFrequency('')
     setSelectedAffiliation('')
+    setSelectedMeetingLength('')
+    setSelectedMeetingType('')
+    setSelectedAttendance('')
+    setSelectedConferences('')
+    setSelectedOutsideSpeakers('')
+    setSelectedEducationTraining('')
   }
 
   const activeFiltersCount = [
@@ -87,6 +168,12 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
     selectedFormat,
     selectedFrequency,
     selectedAffiliation,
+    selectedMeetingLength,
+    selectedMeetingType,
+    selectedAttendance,
+    selectedConferences,
+    selectedOutsideSpeakers,
+    selectedEducationTraining,
   ].filter(Boolean).length
 
   return (
@@ -207,6 +294,126 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 {affiliations.map((affiliation) => (
                   <option key={affiliation.value} value={affiliation.value}>
                     {affiliation.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Meeting Length Filter */}
+            <div className="filter-group">
+              <label htmlFor="meetingLength" className="filter-label">
+                Meeting Length
+              </label>
+              <select
+                id="meetingLength"
+                className="filter-select"
+                value={selectedMeetingLength}
+                onChange={(e) => setSelectedMeetingLength(e.target.value)}
+              >
+                <option value="">All Lengths</option>
+                {meetingLengths.map((length) => (
+                  <option key={length.value} value={length.value}>
+                    {length.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Meeting Type Filter */}
+            <div className="filter-group">
+              <label htmlFor="meetingType" className="filter-label">
+                Meeting Type
+              </label>
+              <select
+                id="meetingType"
+                className="filter-select"
+                value={selectedMeetingType}
+                onChange={(e) => setSelectedMeetingType(e.target.value)}
+              >
+                <option value="">All Types</option>
+                {meetingTypes.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Average Attendance Filter */}
+            <div className="filter-group">
+              <label htmlFor="attendance" className="filter-label">
+                Average Attendance
+              </label>
+              <select
+                id="attendance"
+                className="filter-select"
+                value={selectedAttendance}
+                onChange={(e) => setSelectedAttendance(e.target.value)}
+              >
+                <option value="">All Sizes</option>
+                {attendanceSizes.map((size) => (
+                  <option key={size.value} value={size.value}>
+                    {size.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Conferences Filter */}
+            <div className="filter-group">
+              <label htmlFor="conferences" className="filter-label">
+                Conferences
+              </label>
+              <select
+                id="conferences"
+                className="filter-select"
+                value={selectedConferences}
+                onChange={(e) => setSelectedConferences(e.target.value)}
+              >
+                <option value="">Any</option>
+                {conferenceOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Outside Speakers Filter */}
+            <div className="filter-group">
+              <label htmlFor="outsideSpeakers" className="filter-label">
+                Outside Speakers
+              </label>
+              <select
+                id="outsideSpeakers"
+                className="filter-select"
+                value={selectedOutsideSpeakers}
+                onChange={(e) => setSelectedOutsideSpeakers(e.target.value)}
+              >
+                <option value="">Any</option>
+                {booleanOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Education Training Filter */}
+            <div className="filter-group">
+              <label htmlFor="educationTraining" className="filter-label">
+                Education & Training
+              </label>
+              <select
+                id="educationTraining"
+                className="filter-select"
+                value={selectedEducationTraining}
+                onChange={(e) => setSelectedEducationTraining(e.target.value)}
+              >
+                <option value="">Any</option>
+                {booleanOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>

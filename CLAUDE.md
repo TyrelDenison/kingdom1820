@@ -327,6 +327,20 @@ function convertToRichText(description?: string) {
 - Server Component fetches all programs
 - Passes to `ProgramsClient` for filtering
 - Client-side filtering for instant UX
+- Comprehensive faceted search with filters:
+  - Text search (name, city, state)
+  - State (dropdown)
+  - Religious affiliation (Protestant/Catholic)
+  - Meeting format (in-person/online/both)
+  - Meeting frequency (weekly/monthly/quarterly)
+  - Meeting length (1-2/2-4/4-8 hours)
+  - Meeting type (peer-group/forum/small-group)
+  - Average attendance (1-10/10-20/20-50/50-100/100+)
+  - Conferences (none/annual/multiple)
+  - Outside speakers (yes/no)
+  - Education & training (yes/no)
+- Scrollable sidebar with sticky positioning
+- Active filter count display and "Clear All" functionality
 
 **Program Detail** (`src/app/(frontend)/programs/[id]/page.tsx`)
 - Server Component with dynamic params

@@ -45,11 +45,15 @@
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
   height: fit-content;
+  max-height: calc(100vh - var(--spacing-2xl) - 60px - var(--spacing-2xl));
+  overflow-y: auto;
   position: sticky;
   top: calc(var(--spacing-2xl) + 60px);
 
   @media (max-width: 1024px) {
     position: static;
+    max-height: none;
+    overflow-y: visible;
   }
 }
 

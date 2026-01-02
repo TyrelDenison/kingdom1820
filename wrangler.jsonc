@@ -50,6 +50,14 @@
 			}
 		]
 	},
+  	"observability": {
+    		"logs": {
+      		"enabled": false,
+      		"head_sampling_rate": 1,
+      		"invocation_logs": true,
+      		"persist": true
+    		}
+  	},
 	// Here's how to configure an additional environment
 	// It can be deployed with `CLOUDFLARE_ENV=staging pnpm run deploy`
 	// "env": {

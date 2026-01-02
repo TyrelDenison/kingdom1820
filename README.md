@@ -12,7 +12,7 @@ Kingdom1820 provides a searchable directory of faith-based professional developm
 
 ## Key Features
 
-- 🔍 **Advanced Search & Filtering** - Find programs by location, meeting format, frequency, and religious affiliation
+- 🔍 **Advanced Search & Filtering** - Comprehensive faceted search with 11 filters including location, meeting format, frequency, length, type, attendance size, religious affiliation, conferences, speakers, and training programs
 - 🤖 **AI-Powered Data Extraction** - Automated program discovery using Firecrawl's agent endpoint
 - 📊 **Comprehensive Program Data** - Meeting details, contact info, features, and more
 - 🎨 **Professional Design** - Clean, responsive interface with indigo (#560591) color scheme

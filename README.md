@@ -200,7 +200,6 @@ Required environment variables:
 - `PAYLOAD_SECRET` - Secret key for Payload CMS (generate with `openssl rand -hex 32`)
 - `FIRECRAWL_API_KEY` - API key for Firecrawl service
 - `CLOUDFLARE_ENV` - Environment name (optional, for deployments)
-- `CRON_SECRET` - Secret for cron job authentication (optional)
 
 ## Project Structure
 

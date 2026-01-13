@@ -385,7 +385,6 @@ pnpm run generate:types      # Update TypeScript types
 
 **Optional:**
 - `CLOUDFLARE_ENV` - Environment identifier for deployments
-- `CRON_SECRET` - Secret for cron job authentication (legacy, not currently used)
 
 **Local Development:**
 - Wrangler automatically provides `cloudflare.env.D1` and `cloudflare.env.R2` bindings
@@ -564,7 +563,6 @@ pnpm run deploy
 This runs:
 1. `deploy:database` - Runs migrations against production D1
 2. `deploy:app` - Builds and deploys to Cloudflare Workers
-3. `deploy:cron` - Deploys cron worker (if applicable)
 
 **Environment-Specific:**
 ```bash
@@ -613,7 +611,7 @@ pnpm run deploy:database
 These features were removed in favor of the Firecrawl agent approach:
 
 - ❌ **ScrapeJobs Collection** - URL queue management
-- ❌ **ScraperSettings Global** - Cron scheduling and rate limiting
+- ❌ **ScraperSettings Global** - Scheduling and rate limiting configuration
 - ❌ **Scraping API Endpoints** - `/api/scrape/batch`, `/api/scrape/process`, `/api/scrape/[jobId]`
 - ❌ **URL-based extraction** - Individual URL processing
 - ❌ **Crawl jobs** - Domain crawling for page discovery
@@ -779,7 +777,7 @@ This prevents errors when the document doesn't exist yet (e.g., during creation)
 Potential improvements to consider:
 
 1. **Queue System for Agent Runs** - Cloudflare Queues for job processing with priority levels and scheduled execution
-2. **Scheduled Agent Runs** - Cron jobs for periodic data refresh
+2. **Scheduled Agent Runs** - Periodic data refresh using scheduled triggers
 3. **Citation Display** - Frontend UI to show data sources
 4. **Advanced Duplicate Detection** - Fuzzy matching, normalization
 5. **Geocoding Integration** - Auto-populate coordinates from addresses

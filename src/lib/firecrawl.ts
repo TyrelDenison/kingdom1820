@@ -26,6 +26,9 @@ export const ProgramSchema = z.object({
   hasConferences: z.enum(['none', 'annual', 'multiple']).optional(),
   hasOutsideSpeakers: z.boolean().optional(),
   hasEducationTraining: z.boolean().optional(),
+  annualPrice: z.number().min(0).optional(),
+  monthlyPrice: z.number().min(0).optional(),
+  // Note: price ranges are auto-calculated, not requested from Firecrawl
   contactEmail: z.string().optional(),
   contactPhone: z.string().optional(),
   website: z.string().optional(),

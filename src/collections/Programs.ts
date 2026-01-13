@@ -1,5 +1,29 @@
 import { CollectionConfig } from 'payload'
 
+/**
+ * Calculate annual price range based on price value
+ */
+function calculateAnnualPriceRange(price: number): string | null {
+  if (price === 0) return null
+  if (price <= 240) return '0-240'
+  if (price <= 600) return '241-600'
+  if (price <= 2400) return '601-2400'
+  if (price <= 8400) return '2401-8400'
+  return '8401+'
+}
+
+/**
+ * Calculate monthly price range based on price value
+ */
+function calculateMonthlyPriceRange(price: number): string | null {
+  if (price === 0) return null
+  if (price <= 20) return '0-20'
+  if (price <= 50) return '21-50'
+  if (price <= 200) return '51-200'
+  if (price <= 700) return '201-700'
+  return '701+'
+}
+
 export const Programs: CollectionConfig = {
   slug: 'programs',
   admin: {
@@ -8,6 +32,20 @@ export const Programs: CollectionConfig = {
   },
   versions: {
     drafts: true,
+  },
+  hooks: {
+    beforeChange: [
+      ({ data }) => {
+        // Auto-calculate price ranges from price values
+        if (typeof data.annualPrice === 'number') {
+          data.annualPriceRange = calculateAnnualPriceRange(data.annualPrice)
+        }
+        if (typeof data.monthlyPrice === 'number') {
+          data.monthlyPriceRange = calculateMonthlyPriceRange(data.monthlyPrice)
+        }
+        return data
+      },
+    ],
   },
   fields: [
     // Basic Info
@@ -192,6 +230,68 @@ export const Programs: CollectionConfig = {
       type: 'checkbox',
       defaultValue: false,
       index: true,
+    },
+
+    // Pricing
+    {
+      name: 'annualPrice',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Annual membership fee in USD (use 0 if not offered or free)',
+      },
+      validate: (val: number) => {
+        if (val < 0) {
+          return 'Price cannot be negative'
+        }
+        return true
+      },
+    },
+    {
+      name: 'monthlyPrice',
+      type: 'number',
+      defaultValue: 0,
+      admin: {
+        description: 'Monthly membership fee in USD (use 0 if not offered or free)',
+      },
+      validate: (val: number) => {
+        if (val < 0) {
+          return 'Price cannot be negative'
+        }
+        return true
+      },
+    },
+    {
+      name: 'annualPriceRange',
+      type: 'select',
+      options: [
+        { label: '$0-$240', value: '0-240' },
+        { label: '$241-$600', value: '241-600' },
+        { label: '$601-$2,400', value: '601-2400' },
+        { label: '$2,401-$8,400', value: '2401-8400' },
+        { label: '$8,401+', value: '8401+' },
+      ],
+      index: true,
+      admin: {
+        description: 'Auto-calculated from annualPrice',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'monthlyPriceRange',
+      type: 'select',
+      options: [
+        { label: '$0-$20', value: '0-20' },
+        { label: '$21-$50', value: '21-50' },
+        { label: '$51-$200', value: '51-200' },
+        { label: '$201-$700', value: '201-700' },
+        { label: '$701+', value: '701+' },
+      ],
+      index: true,
+      admin: {
+        description: 'Auto-calculated from monthlyPrice',
+        readOnly: true,
+      },
     },
 
     // Contact & Links

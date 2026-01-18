@@ -10,6 +10,7 @@ interface ProgramsClientProps {
 
 export function ProgramsClient({ programs }: ProgramsClientProps) {
   const [searchTerm, setSearchTerm] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedState, setSelectedState] = useState('')
   const [selectedFormat, setSelectedFormat] = useState('')
   const [selectedFrequency, setSelectedFrequency] = useState('')
@@ -224,7 +225,18 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
           {/* Filters Sidebar */}
           <aside className="filters-sidebar">
             <div className="filters-header">
-              <h2 className="filters-title">Filters</h2>
+              <div className="filters-title-row">
+                <h2 className="filters-title">Filters</h2>
+                <button
+                  type="button"
+                  className="filters-help-button"
+                  onClick={() => setIsModalOpen(true)}
+                  aria-label="Understand our Filters"
+                >
+                  <span className="filters-help-icon">?</span>
+                  <span className="filters-help-tooltip">Understand our Filters</span>
+                </button>
+              </div>
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleClearFilters}
@@ -495,6 +507,11 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
           {/* Programs List */}
           <div className="programs-content">
             <div className="programs-results-header">
+              <p className="programs-instructions">
+                Please use the selections to the left to narrow down your search using key criteria that
+                distinguish these groups from one another. If you aren&apos;t sure how to complete a section,
+                just click on the ? icon for a little guidance.
+              </p>
               <p className="programs-count">
                 {filteredPrograms.length} {filteredPrograms.length === 1 ? 'program' : 'programs'} found
               </p>
@@ -523,6 +540,112 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Filters Explainer Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="modal-close"
+              onClick={() => setIsModalOpen(false)}
+              aria-label="Close modal"
+            >
+              &times;
+            </button>
+            <h2 className="modal-title">Understand our Filters</h2>
+
+            <div className="modal-body">
+              <section className="modal-section">
+                <h3>Format</h3>
+                <p>
+                  While online meetings can be a great experience and convenient, you may
+                  prefer a group that is mostly online, but has in-person meetings or social
+                  gatherings at least a few times per year.
+                </p>
+              </section>
+
+              <section className="modal-section">
+                <h3>Frequency</h3>
+                <p>
+                  Expect weekly meetings to be 60-90 minutes and less frequent meetings to
+                  be 2 to 6 hours. What can you commit to?
+                </p>
+              </section>
+
+              <section className="modal-section">
+                <h3>Type of Meeting</h3>
+
+                <h4>Peer</h4>
+                <p>
+                  Peer groups are typically highly structured, led by a certified coach, and
+                  attended by 8-12 of the same members on a regular basis, usually monthly.
+                  Sessions generally last between 3-6 hours and may include speakers,
+                  curriculum, food, in-depth discussion in a confidential environment. Some
+                  peer group memberships also include a one-on-one session each month
+                  with the coach/facilitator in addition to the group meeting.
+                </p>
+
+                <h4>Forum</h4>
+                <p>
+                  Forums are typically moderately formal, attended by a variety of business
+                  owners, executives, and others. Attendees will vary from one gathering to
+                  the next and may number up to 100 people. Forums meet on a regular basis
+                  with sessions that last for 1-2 hours and typically include food, speakers,
+                  small group conversation which may be guided by a curriculum, discussion
+                  topic or questions to answer. These small groups may include 3-5 people
+                  and typically DO NOT have a confidentiality requirement.
+                </p>
+
+                <h4>Volunteer</h4>
+                <p>
+                  These groups are typically informal and can be led by a local volunteer who
+                  may use a curriculum or study guide provided by the program sponsor.
+                  Meetings are 60-90 minutes and are attended by 3-12 people. Typically,
+                  these groups DO NOT have confidentiality requirements.
+                </p>
+              </section>
+
+              <section className="modal-section">
+                <h3>One-on-One Meeting with a Coach or Advisor</h3>
+                <p>
+                  Typically, this feature is only available in peer group programs run by a
+                  certified coach or advisor. Certified coaches or facilitators are trained
+                  professionals who have received some level of formal training by the
+                  sponsoring organization, may also hold other similar certifications and may
+                  be a full-time consultant in business or theology.
+                </p>
+              </section>
+
+              <section className="modal-section">
+                <h3>Study Time Outside of Meetings Each Month</h3>
+                <p>
+                  Peer groups are typically more structured and include more in-depth training
+                  elements than other groups. Members of peer groups are more likely to have
+                  to commit a few hours per month to study class materials or develop
+                  projects and presentations prior to group meetings or one-on-one coaching
+                  sessions. Other types of groups are usually far less formal, have little to no
+                  outside work requirements and provide a more casual experience.
+                </p>
+              </section>
+
+              <section className="modal-section">
+                <h3>Education and Training</h3>
+                <p>
+                  Peer groups typically provide in-depth education and training on key topics in
+                  best business practices and biblical principles delivered by professional
+                  coaches or subject matter expert speakers. Less formal groups provide
+                  training on various business and faith topics typically from content provided
+                  by the sponsoring organization. This level of education and training is
+                  intended for the broader audience served by these programs, is usually
+                  informative and thought provoking although the content is generally less
+                  complex and in-depth.
+                </p>
+              </section>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

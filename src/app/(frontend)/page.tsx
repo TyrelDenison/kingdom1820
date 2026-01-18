@@ -72,31 +72,26 @@ export default async function HomePage() {
       <section className="section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Find Your Community</h2>
+            <h2 className="section-title">Connect with Faith-Based Professional Networks</h2>
           </div>
 
           <div className="content-section">
             <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-              exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-              irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-              pariatur.
+              Discover business and professional programs grounded in Christian values. Build
+              meaningful relationships with like-minded professionals committed to excellence,
+              integrity, leading with faith and having a positive impact on their organization and the
+              people around them.
             </p>
 
-            <p>
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-              mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit
-              voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab
-              illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.
-            </p>
+            <blockquote className="scripture-quote">
+              &ldquo;For where two or three gather in my name, there am I with them.&rdquo; Matthew 18:20 NIV
+            </blockquote>
 
             <p>
-              Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia
-              consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro
-              quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit, sed
-              quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat
-              voluptatem.
+              Kingdom 1820 is an independent platform designed to help those seeking the
+              intersection of best business practices and Biblical principles to find their people. We
+              are not affiliated with any particular group and do not accept funding to promote any
+              particular group. Our insights are our own and those of the group members we survey.
             </p>
           </div>
         </div>

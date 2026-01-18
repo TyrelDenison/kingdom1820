@@ -328,12 +328,17 @@ function convertToRichText(description?: string) {
 **Home** (`src/app/(frontend)/page.tsx`)
 - Server Component
 - Fetches featured programs from Payload
-- Hero, stats, featured grid, CTA sections
+- Hero section with primary CTA
+- Stats section (programs listed, coverage, formats)
+- "Connect with Faith-Based Professional Networks" section with mission statement and Matthew 18:20 scripture quote
+- CTA section
 
 **Programs Search** (`src/app/(frontend)/programs/page.tsx`)
 - Server Component fetches all programs
 - Passes to `ProgramsClient` for filtering
 - Client-side filtering for instant UX
+- Instructional text guiding users to use filters
+- Filters help button (?) with tooltip opens explainer modal
 - Comprehensive faceted search with filters:
   - Text search (name, city, state)
   - State (dropdown)
@@ -350,6 +355,17 @@ function convertToRichText(description?: string) {
   - Monthly price range ($0-$20/$21-$50/$51-$200/$201-$700/$701+)
 - Scrollable sidebar with sticky positioning
 - Active filter count display and "Clear All" functionality
+
+**Filters Explainer Modal** (`src/app/(frontend)/programs/ProgramsClient.tsx`)
+- Triggered by clicking the ? icon next to "Filters" heading
+- Explains filter options to help users understand criteria:
+  - Format: Online vs in-person meeting preferences
+  - Frequency: Weekly (60-90 min) vs monthly/quarterly (2-6 hours)
+  - Type of Meeting: Peer groups, Forums, Volunteer-led groups
+  - One-on-One Coaching: Availability with certified coaches
+  - Study Time: Outside meeting preparation requirements
+  - Education & Training: Depth of content provided
+- Modal closes on X button click or clicking outside
 
 **Program Detail** (`src/app/(frontend)/programs/[id]/page.tsx`)
 - Server Component with dynamic params

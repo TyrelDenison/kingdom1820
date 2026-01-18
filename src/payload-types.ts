@@ -212,6 +212,22 @@ export interface Program {
   hasConferences?: ('none' | 'annual' | 'multiple') | null;
   hasOutsideSpeakers?: boolean | null;
   hasEducationTraining?: boolean | null;
+  /**
+   * Annual membership fee in USD (use 0 if not offered or free)
+   */
+  annualPrice?: number | null;
+  /**
+   * Monthly membership fee in USD (use 0 if not offered or free)
+   */
+  monthlyPrice?: number | null;
+  /**
+   * Auto-calculated from annualPrice
+   */
+  annualPriceRange?: ('0-240' | '241-600' | '601-2400' | '2401-8400' | '8401+') | null;
+  /**
+   * Auto-calculated from monthlyPrice
+   */
+  monthlyPriceRange?: ('0-20' | '21-50' | '51-200' | '201-700' | '701+') | null;
   contactEmail?: string | null;
   contactPhone?: string | null;
   website?: string | null;
@@ -410,6 +426,10 @@ export interface ProgramsSelect<T extends boolean = true> {
   hasConferences?: T;
   hasOutsideSpeakers?: T;
   hasEducationTraining?: T;
+  annualPrice?: T;
+  monthlyPrice?: T;
+  annualPriceRange?: T;
+  monthlyPriceRange?: T;
   contactEmail?: T;
   contactPhone?: T;
   website?: T;

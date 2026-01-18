@@ -95,6 +95,10 @@ The core data model for faith-based programs.
   hasConferences: 'none' | 'annual' | 'multiple' (indexed)
   hasOutsideSpeakers: boolean (indexed)
   hasEducationTraining: boolean (indexed)
+  annualPrice: number (default: 0, validated ≥ 0)
+  monthlyPrice: number (default: 0, validated ≥ 0)
+  annualPriceRange: '0-240' | '241-600' | '601-2400' | '2401-8400' | '8401+' (read-only, auto-calculated, indexed)
+  monthlyPriceRange: '0-20' | '21-50' | '51-200' | '201-700' | '701+' (read-only, auto-calculated, indexed)
   contactEmail: email
   contactPhone: string
   website: string
@@ -106,6 +110,8 @@ The core data model for faith-based programs.
 - `sourceUrl` stores citations as JSON array string: `["url1", "url2"]`
 - Drafts enabled with `versions: { drafts: true }`
 - Multiple fields indexed for faceted search/filtering
+- Price ranges are automatically calculated via `beforeChange` hook when `annualPrice` or `monthlyPrice` are set
+- Programs can have annual pricing, monthly pricing, or both
 
 ### AgentPrompts Collection (`src/collections/AgentPrompts.ts`)
 
@@ -169,7 +175,7 @@ export const ProgramSchema = z.object({
   name: z.string().optional(),
   description: z.string().optional(),
   religiousAffiliation: z.enum(['protestant', 'catholic']).optional(),
-  // ... 18 program fields (coordinates excluded - will be geocoded server-side)
+  // ... 20 program fields (coordinates excluded - will be geocoded server-side)
 })
 
 export type ProgramData = z.infer<typeof ProgramSchema>
@@ -339,6 +345,8 @@ function convertToRichText(description?: string) {
   - Conferences (none/annual/multiple)
   - Outside speakers (yes/no)
   - Education & training (yes/no)
+  - Annual price range ($0-$240/$241-$600/$601-$2,400/$2,401-$8,400/$8,401+)
+  - Monthly price range ($0-$20/$21-$50/$51-$200/$201-$700/$701+)
 - Scrollable sidebar with sticky positioning
 - Active filter count display and "Clear All" functionality
 
@@ -447,6 +455,7 @@ pnpm run generate:types      # Update TypeScript types
    - address, city, state, zipCode
    - meetingFormat, meetingFrequency, meetingLength, meetingType
    - averageAttendance, hasConferences, hasOutsideSpeakers, hasEducationTraining
+   - annualPrice, monthlyPrice (membership fees in USD, use 0 if free or not available)
    - contactEmail, contactPhone, website
 
    Return data matching the provided JSON schema. Include source citations.
@@ -778,14 +787,13 @@ Potential improvements to consider:
 
 1. **Queue System for Agent Runs** - Cloudflare Queues for job processing with priority levels and scheduled execution
 2. **Scheduled Agent Runs** - Periodic data refresh using scheduled triggers
-3. **Citation Display** - Frontend UI to show data sources
+3. **Citation Display** - Frontend UI to show data sources on program detail pages
 4. **Advanced Duplicate Detection** - Fuzzy matching, normalization
 5. **Geocoding Integration** - Auto-populate coordinates from addresses
 6. **Map View** - Interactive map of programs using coordinates
-7. **More Filters** - Meeting length, attendance size, features
-8. **Export Functionality** - CSV/PDF export of search results
-9. **User Favorites** - Save programs for later review
-10. **Analytics** - Track popular searches, program views
+7. **Export Functionality** - CSV/PDF export of search results
+8. **User Favorites** - Save programs for later review
+9. **Analytics** - Track popular searches, program views
 
 ## Resources
 

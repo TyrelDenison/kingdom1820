@@ -20,6 +20,8 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
   const [selectedConferences, setSelectedConferences] = useState('')
   const [selectedOutsideSpeakers, setSelectedOutsideSpeakers] = useState('')
   const [selectedEducationTraining, setSelectedEducationTraining] = useState('')
+  const [selectedAnnualPriceRange, setSelectedAnnualPriceRange] = useState('')
+  const [selectedMonthlyPriceRange, setSelectedMonthlyPriceRange] = useState('')
 
   // Extract unique values for filters
   const states = useMemo(() => {
@@ -71,6 +73,22 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
   const booleanOptions = [
     { label: 'Yes', value: 'true' },
     { label: 'No', value: 'false' },
+  ]
+
+  const annualPriceRanges = [
+    { label: '$0-$240', value: '0-240' },
+    { label: '$241-$600', value: '241-600' },
+    { label: '$601-$2,400', value: '601-2400' },
+    { label: '$2,401-$8,400', value: '2401-8400' },
+    { label: '$8,401+', value: '8401+' },
+  ]
+
+  const monthlyPriceRanges = [
+    { label: '$0-$20', value: '0-20' },
+    { label: '$21-$50', value: '21-50' },
+    { label: '$51-$200', value: '51-200' },
+    { label: '$201-$700', value: '201-700' },
+    { label: '$701+', value: '701+' },
   ]
 
   // Filter programs based on search and filters
@@ -145,9 +163,19 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
         }
       }
 
+      // Annual price range filter
+      if (selectedAnnualPriceRange && program.annualPriceRange !== selectedAnnualPriceRange) {
+        return false
+      }
+
+      // Monthly price range filter
+      if (selectedMonthlyPriceRange && program.monthlyPriceRange !== selectedMonthlyPriceRange) {
+        return false
+      }
+
       return true
     })
-  }, [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation, selectedMeetingLength, selectedMeetingType, selectedAttendance, selectedConferences, selectedOutsideSpeakers, selectedEducationTraining])
+  }, [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation, selectedMeetingLength, selectedMeetingType, selectedAttendance, selectedConferences, selectedOutsideSpeakers, selectedEducationTraining, selectedAnnualPriceRange, selectedMonthlyPriceRange])
 
   const handleClearFilters = () => {
     setSearchTerm('')
@@ -161,6 +189,8 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
     setSelectedConferences('')
     setSelectedOutsideSpeakers('')
     setSelectedEducationTraining('')
+    setSelectedAnnualPriceRange('')
+    setSelectedMonthlyPriceRange('')
   }
 
   const activeFiltersCount = [
@@ -174,6 +204,8 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
     selectedConferences,
     selectedOutsideSpeakers,
     selectedEducationTraining,
+    selectedAnnualPriceRange,
+    selectedMonthlyPriceRange,
   ].filter(Boolean).length
 
   return (
@@ -414,6 +446,46 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 {booleanOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Annual Price Range Filter */}
+            <div className="filter-group">
+              <label htmlFor="annualPriceRange" className="filter-label">
+                Annual Price Range
+              </label>
+              <select
+                id="annualPriceRange"
+                className="filter-select"
+                value={selectedAnnualPriceRange}
+                onChange={(e) => setSelectedAnnualPriceRange(e.target.value)}
+              >
+                <option value="">Any</option>
+                {annualPriceRanges.map((range) => (
+                  <option key={range.value} value={range.value}>
+                    {range.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Monthly Price Range Filter */}
+            <div className="filter-group">
+              <label htmlFor="monthlyPriceRange" className="filter-label">
+                Monthly Price Range
+              </label>
+              <select
+                id="monthlyPriceRange"
+                className="filter-select"
+                value={selectedMonthlyPriceRange}
+                onChange={(e) => setSelectedMonthlyPriceRange(e.target.value)}
+              >
+                <option value="">Any</option>
+                {monthlyPriceRanges.map((range) => (
+                  <option key={range.value} value={range.value}>
+                    {range.label}
                   </option>
                 ))}
               </select>

@@ -14,6 +14,7 @@ Kingdom1820 is a Next.js 15 application with Payload CMS 3.63, deployed on Cloud
 - Firecrawl SDK (@mendable/firecrawl-js v4.10.0)
 - Zod (schema validation)
 - TypeScript
+- Google Analytics 4 (@next/third-parties)
 
 ## Architecture
 
@@ -355,6 +356,62 @@ function convertToRichText(description?: string) {
 - Full program details with breadcrumb
 - Contact sidebar with icons
 
+### Analytics
+
+**Google Analytics 4** (`src/app/(frontend)/layout.tsx`)
+
+The application uses Google Analytics 4 for visitor tracking and analytics.
+
+**Implementation:**
+- Uses `@next/third-parties/google` package for optimized script loading
+- GoogleAnalytics component integrated in root layout
+- Loads on all public pages automatically
+
+**Key Features:**
+- Automatic page view tracking
+- City-level geographic data collection
+- IP-based geolocation (automatic, no configuration needed)
+- Privacy-compliant (IP anonymization by default in GA4)
+
+**Location Tracking:**
+GA4 automatically tracks visitor locations with granularity down to:
+- Country
+- Region/State
+- City
+
+**Configuration:**
+```typescript
+// src/app/(frontend)/layout.tsx
+import { GoogleAnalytics } from '@next/third-parties/google'
+
+export default async function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body>
+        <Header />
+        <main>{children}</main>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
+      </body>
+    </html>
+  )
+}
+```
+
+**Environment Variable:**
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` - Google Analytics 4 Measurement ID (format: `G-XXXXXXXXXX`)
+- Must be prefixed with `NEXT_PUBLIC_` to be available in browser
+
+**Viewing Analytics:**
+Access your GA4 dashboard at https://analytics.google.com/
+- **Reports → Real-time** - Current visitors (appears within minutes)
+- **Reports → User → Demographics details** - City/region/country data (24-48 hour delay)
+- **Reports → Engagement → Pages and screens** - Page traffic statistics
+
+**Performance:**
+- Scripts are optimized by Next.js for minimal performance impact
+- Loads asynchronously without blocking page render
+- Uses `@next/third-parties` for best practices implementation
+
 ## Database Migrations
 
 **Current Migrations:**
@@ -390,12 +447,18 @@ pnpm run generate:types      # Update TypeScript types
 **Required:**
 - `PAYLOAD_SECRET` - Payload CMS secret key
 - `FIRECRAWL_API_KEY` - Firecrawl API authentication
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` - Google Analytics 4 Measurement ID (format: `G-XXXXXXXXXX`)
 
 **Optional:**
 - `CLOUDFLARE_ENV` - Environment identifier for deployments
 
 **Local Development:**
 - Wrangler automatically provides `cloudflare.env.D1` and `cloudflare.env.R2` bindings
+
+**Note on Public Environment Variables:**
+- Variables prefixed with `NEXT_PUBLIC_` are embedded in the browser bundle at build time
+- These are safe to expose to the client (e.g., GA tracking IDs, public API keys)
+- Must be set at build time, not runtime
 
 ## Common Tasks
 
@@ -577,6 +640,20 @@ This runs:
 ```bash
 CLOUDFLARE_ENV=production pnpm run deploy
 ```
+
+**Deploying with Google Analytics:**
+Since `NEXT_PUBLIC_GA_MEASUREMENT_ID` is embedded at build time, you must set it during deployment:
+
+```bash
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX pnpm run deploy
+```
+
+Or for environment-specific deployments:
+```bash
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX CLOUDFLARE_ENV=production pnpm run deploy
+```
+
+**Note:** For CI/CD pipelines, set `NEXT_PUBLIC_GA_MEASUREMENT_ID` as a build environment variable in your deployment platform (GitHub Actions, Cloudflare Pages, etc.).
 
 **Important Post-Deployment Steps:**
 
@@ -793,7 +870,7 @@ Potential improvements to consider:
 6. **Map View** - Interactive map of programs using coordinates
 7. **Export Functionality** - CSV/PDF export of search results
 8. **User Favorites** - Save programs for later review
-9. **Analytics** - Track popular searches, program views
+9. **Enhanced Analytics** - Custom events for search queries, filter usage, program views, and conversion tracking
 
 ## Resources
 
@@ -802,3 +879,5 @@ Potential improvements to consider:
 - [Cloudflare Workers Docs](https://developers.cloudflare.com/workers/)
 - [Firecrawl Docs](https://docs.firecrawl.dev)
 - [Zod Documentation](https://zod.dev)
+- [Google Analytics 4 Documentation](https://support.google.com/analytics/)
+- [Next.js Third Parties (@next/third-parties)](https://nextjs.org/docs/app/building-your-application/optimizing/third-party-libraries)

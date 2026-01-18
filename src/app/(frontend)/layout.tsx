@@ -1,4 +1,5 @@
 import React from 'react'
+import { GoogleAnalytics } from '@next/third-parties/google'
 import { Header } from '@/components/Header'
 import './styles.css'
 
@@ -15,6 +16,7 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
       <body>
         <Header />
         <main>{children}</main>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID || ''} />
       </body>
     </html>
   )

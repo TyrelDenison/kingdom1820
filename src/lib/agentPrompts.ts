@@ -5,6 +5,7 @@
 import { getPayload } from 'payload'
 import config from '@/payload.config'
 import { getFirecrawlService, type ProgramData } from './firecrawl'
+import { convertToRichText } from './programImport'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
@@ -43,43 +44,6 @@ async function saveFirecrawlResponse(programs: Array<ProgramData & { citations: 
   } catch (error) {
     console.error('Failed to save Firecrawl response to file:', error)
     // Don't throw - this is just for debugging
-  }
-}
-
-/**
- * Convert a plain text description to Payload richText format
- */
-function convertToRichText(description?: string) {
-  if (!description) return undefined
-
-  return {
-    root: {
-      type: 'root',
-      format: '' as const,
-      indent: 0,
-      version: 1,
-      children: [
-        {
-          type: 'paragraph',
-          format: '' as const,
-          indent: 0,
-          version: 1,
-          children: [
-            {
-              type: 'text',
-              format: 0,
-              detail: 0,
-              mode: 'normal' as const,
-              style: '',
-              text: description,
-              version: 1,
-            },
-          ],
-          direction: 'ltr' as const,
-        },
-      ],
-      direction: 'ltr' as const,
-    },
   }
 }
 

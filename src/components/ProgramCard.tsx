@@ -113,20 +113,33 @@ export function ProgramCard({ program, variant = 'default' }: ProgramCardProps) 
         )}
       </div>
 
-      {variant === 'default' && (
-        <div className="program-card__features">
+      {variant === 'default' && (program.hasConferences !== 'none' || program.hasOutsideSpeakers || program.hasEducationTraining) && (
+        <ul className="program-card__features">
           {program.hasConferences && program.hasConferences !== 'none' && (
-            <span className="badge">
+            <li>
+              <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
               Conferences: {program.hasConferences.charAt(0).toUpperCase() + program.hasConferences.slice(1)}
-            </span>
+            </li>
           )}
           {program.hasOutsideSpeakers && (
-            <span className="badge">Outside Speakers</span>
+            <li>
+              <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Features outside speakers
+            </li>
           )}
           {program.hasEducationTraining && (
-            <span className="badge">Education & Training</span>
+            <li>
+              <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Offers education and training
+            </li>
           )}
-        </div>
+        </ul>
       )}
 
       <div className="program-card__actions">

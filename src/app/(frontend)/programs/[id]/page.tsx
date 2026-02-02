@@ -116,8 +116,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                     <div className="detail-item">
                       <dt className="detail-label">Duration</dt>
                       <dd className="detail-value">
-                        {program.meetingLength === '1-2' ? '1–2 hours' :
-                         program.meetingLength === '2-4' ? '2–4 hours' : '4–8 hours'}
+                        {program.meetingLength} hours
                       </dd>
                     </div>
                   )}
@@ -134,7 +133,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                   {program.averageAttendance && (
                     <div className="detail-item">
                       <dt className="detail-label">Average Attendance</dt>
-                      <dd className="detail-value">{program.averageAttendance} people</dd>
+                      <dd className="detail-value">~{program.averageAttendance} people</dd>
                     </div>
                   )}
                 </div>

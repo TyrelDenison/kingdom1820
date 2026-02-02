@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload'
+import { importProgramsFromCSV } from '@/lib/programImport'
 
 /**
  * Calculate annual price range based on price value
@@ -24,15 +25,71 @@ function calculateMonthlyPriceRange(price: number): string | null {
   return '701+'
 }
 
+/**
+ * Calculate meeting length range based on hours
+ */
+function calculateMeetingLengthRange(hours: number): string | null {
+  if (hours <= 0) return null
+  if (hours <= 2) return '1-2'
+  if (hours <= 4) return '2-4'
+  return '4-8'
+}
+
+/**
+ * Calculate average attendance range based on count
+ */
+function calculateAttendanceRange(count: number): string | null {
+  if (count <= 0) return null
+  if (count <= 10) return '1-10'
+  if (count <= 20) return '10-20'
+  if (count <= 50) return '20-50'
+  if (count <= 100) return '50-100'
+  return '100+'
+}
+
 export const Programs: CollectionConfig = {
   slug: 'programs',
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'religiousAffiliation', 'city', 'state'],
+    components: {
+      beforeListTable: ['src/components/admin/UploadCSVButton'],
+    },
   },
   versions: {
     drafts: true,
   },
+  endpoints: [
+    {
+      path: '/upload-csv',
+      method: 'post',
+      handler: async (req) => {
+        try {
+          // Get CSV content from request body
+          const formData = await req.formData?.()
+          const csvContent = formData?.get('csv')
+
+          if (!csvContent || typeof csvContent !== 'string') {
+            return Response.json(
+              { error: 'No CSV content provided' },
+              { status: 400 }
+            )
+          }
+
+          // Import programs from CSV
+          const result = await importProgramsFromCSV(req.payload, csvContent)
+
+          return Response.json(result)
+        } catch (error) {
+          console.error('Error uploading CSV:', error)
+          return Response.json(
+            { error: error instanceof Error ? error.message : 'Unknown error' },
+            { status: 500 }
+          )
+        }
+      },
+    },
+  ],
   hooks: {
     beforeChange: [
       ({ data }) => {
@@ -42,6 +99,14 @@ export const Programs: CollectionConfig = {
         }
         if (typeof data.monthlyPrice === 'number') {
           data.monthlyPriceRange = calculateMonthlyPriceRange(data.monthlyPrice)
+        }
+        // Auto-calculate meeting length range from hours
+        if (typeof data.meetingLength === 'number') {
+          data.meetingLengthRange = calculateMeetingLengthRange(data.meetingLength)
+        }
+        // Auto-calculate attendance range from count
+        if (typeof data.averageAttendance === 'number') {
+          data.averageAttendanceRange = calculateAttendanceRange(data.averageAttendance)
         }
         return data
       },
@@ -173,14 +238,31 @@ export const Programs: CollectionConfig = {
     },
     {
       name: 'meetingLength',
+      type: 'number',
+      admin: {
+        description: 'Meeting length in hours (e.g., 1.5, 3, 6)',
+        step: 0.5,
+      },
+      validate: (val: number | null | undefined) => {
+        if (val !== null && val !== undefined && val <= 0) {
+          return 'Meeting length must be greater than 0'
+        }
+        return true
+      },
+    },
+    {
+      name: 'meetingLengthRange',
       type: 'select',
-      required: true,
       options: [
         { label: '1–2 hours', value: '1-2' },
         { label: '2–4 hours', value: '2-4' },
         { label: '4–8 hours', value: '4-8' },
       ],
       index: true,
+      admin: {
+        description: 'Auto-calculated from meetingLength',
+        readOnly: true,
+      },
     },
     {
       name: 'meetingType',
@@ -195,8 +277,20 @@ export const Programs: CollectionConfig = {
     },
     {
       name: 'averageAttendance',
+      type: 'number',
+      admin: {
+        description: 'Average number of attendees (e.g., 8, 15, 35)',
+      },
+      validate: (val: number | null | undefined) => {
+        if (val !== null && val !== undefined && val <= 0) {
+          return 'Average attendance must be greater than 0'
+        }
+        return true
+      },
+    },
+    {
+      name: 'averageAttendanceRange',
       type: 'select',
-      required: true,
       options: [
         { label: '1–10', value: '1-10' },
         { label: '10–20', value: '10-20' },
@@ -205,6 +299,10 @@ export const Programs: CollectionConfig = {
         { label: '100+', value: '100+' },
       ],
       index: true,
+      admin: {
+        description: 'Auto-calculated from averageAttendance',
+        readOnly: true,
+      },
     },
 
     // Additional Features

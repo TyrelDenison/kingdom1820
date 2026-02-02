@@ -20,9 +20,11 @@ export const ProgramSchema = z.object({
   // Note: coordinates will be geocoded server-side from address, not requested from Firecrawl
   meetingFormat: z.enum(['in-person', 'online', 'both']).optional(),
   meetingFrequency: z.enum(['weekly', 'monthly', 'quarterly']).optional(),
-  meetingLength: z.enum(['1-2', '2-4', '4-8']).optional(),
+  meetingLength: z.number().min(0).optional(), // Meeting length in hours
+  // Note: meetingLengthRange auto-calculated, not requested from Firecrawl
   meetingType: z.enum(['peer-group', 'forum', 'small-group']).optional(),
-  averageAttendance: z.enum(['1-10', '10-20', '20-50', '50-100', '100+']).optional(),
+  averageAttendance: z.number().min(0).optional(), // Number of attendees
+  // Note: averageAttendanceRange auto-calculated, not requested from Firecrawl
   hasConferences: z.enum(['none', 'annual', 'multiple']).optional(),
   hasOutsideSpeakers: z.boolean().optional(),
   hasEducationTraining: z.boolean().optional(),

@@ -61,11 +61,13 @@ src/
 │       ├── RunAgentPromptButton.tsx  # Edit view execution button
 │       ├── AgentPromptActions.tsx    # List view actions column
 │       ├── LastRunDisplay.tsx        # Edit view last run details
-│       └── LastRunCell.tsx           # List view last run cell
+│       ├── LastRunCell.tsx           # List view last run cell
+│       └── UploadCSVButton.tsx       # CSV upload modal for programs
 ├── globals/                     # (Empty - ScraperSettings removed)
 ├── lib/
 │   ├── firecrawl.ts             # Firecrawl service + Zod schemas
-│   └── agentPrompts.ts          # Agent prompt execution utility
+│   ├── agentPrompts.ts          # Agent prompt execution utility
+│   └── programImport.ts         # Shared program import utilities (CSV + agent)
 ├── migrations/                  # Database migration files
 └── payload.config.ts            # Payload CMS configuration
 ```
@@ -595,6 +597,70 @@ View in:
 - Edit view: Expandable details with error list
 - List view: Compact time-ago format with stats
 
+### CSV Upload
+
+Programs can be bulk imported via CSV upload from the Programs collection list view.
+
+**UI Access:**
+1. Navigate to `/admin/collections/programs`
+2. Click "Upload CSV" button above the programs table
+3. Drag and drop a CSV file or click to browse
+4. Review the upload results with success/error counts
+
+**CSV Format Requirements:**
+
+Required columns:
+- `name` (or `program_name`)
+- `religiousAffiliation` (protestant/catholic)
+- `address`
+- `city`
+- `state` (2-letter code, e.g., CA)
+- `zipCode` (5 digits)
+- `meetingFormat` (in-person/online/both)
+- `meetingFrequency` (weekly/monthly/quarterly)
+- `meetingType` (peer-group/forum/small-group)
+
+Optional columns:
+- `description`
+- `meetingLength` (hours)
+- `averageAttendance`
+- `hasConferences` (none/annual/multiple)
+- `hasOutsideSpeakers` (true/false)
+- `hasEducationTraining` (true/false)
+- `annualPrice`
+- `monthlyPrice`
+- `contactEmail`
+- `contactPhone`
+- `website`
+
+**Header Flexibility:**
+
+The CSV parser supports multiple header naming conventions:
+- `name`, `program_name`, `programname`, `program name`, `organization`
+- `religious_affiliation`, `religiousaffiliation`, `affiliation`
+- `zip_code`, `zipcode`, `zip`, `postal_code`
+- etc.
+
+**Duplicate Detection:**
+
+Uses the same logic as agent prompts:
+- Programs are matched by `name + city + state`
+- Existing matches are updated
+- New programs are created as drafts
+
+**Programmatic Usage:**
+
+```typescript
+import { importProgramsFromCSV } from '@/lib/programImport'
+import { getPayload } from 'payload'
+
+const payload = await getPayload({ config })
+const csvContent = '...'
+
+const result = await importProgramsFromCSV(payload, csvContent)
+console.log(`Created: ${result.created}, Updated: ${result.updated}, Failed: ${result.failed}`)
+```
+
 ## API Endpoints
 
 ### Payload CMS API
@@ -617,6 +683,13 @@ See [Payload REST API docs](https://payloadcms.com/docs/rest-api/overview).
   - Returns `RunAgentPromptResult` JSON
   - Updates `lastRun` field with results
   - Implemented as Payload custom endpoint (not Next.js route)
+
+**CSV Upload:**
+- `POST /api/programs/upload-csv` - Upload programs via CSV
+  - Accepts form data with `csv` field containing CSV content
+  - Returns `ProgramImportResult` JSON with created/updated/failed counts
+  - Uses same duplicate detection as agent prompts (name + city + state)
+  - Implemented as Payload custom endpoint
 
 **Removed Endpoints:**
 - `/api/scrape/*` - Old scraping endpoints removed in favor of agent system

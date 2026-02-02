@@ -206,9 +206,23 @@ export interface Program {
   };
   meetingFormat: 'in-person' | 'online' | 'both';
   meetingFrequency: 'weekly' | 'monthly' | 'quarterly';
-  meetingLength: '1-2' | '2-4' | '4-8';
+  /**
+   * Meeting length in hours (e.g., 1.5, 3, 6)
+   */
+  meetingLength?: number | null;
+  /**
+   * Auto-calculated from meetingLength
+   */
+  meetingLengthRange?: ('1-2' | '2-4' | '4-8') | null;
   meetingType: 'peer-group' | 'forum' | 'small-group';
-  averageAttendance: '1-10' | '10-20' | '20-50' | '50-100' | '100+';
+  /**
+   * Average number of attendees (e.g., 8, 15, 35)
+   */
+  averageAttendance?: number | null;
+  /**
+   * Auto-calculated from averageAttendance
+   */
+  averageAttendanceRange?: ('1-10' | '10-20' | '20-50' | '50-100' | '100+') | null;
   hasConferences?: ('none' | 'annual' | 'multiple') | null;
   hasOutsideSpeakers?: boolean | null;
   hasEducationTraining?: boolean | null;
@@ -421,8 +435,10 @@ export interface ProgramsSelect<T extends boolean = true> {
   meetingFormat?: T;
   meetingFrequency?: T;
   meetingLength?: T;
+  meetingLengthRange?: T;
   meetingType?: T;
   averageAttendance?: T;
+  averageAttendanceRange?: T;
   hasConferences?: T;
   hasOutsideSpeakers?: T;
   hasEducationTraining?: T;

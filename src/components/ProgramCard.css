@@ -28,12 +28,29 @@
   font-weight: 600;
   color: var(--color-text-primary);
   flex: 1;
+  /* Fixed height for 3 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+  min-height: calc(1.5rem * 1.3 * 3);
 }
 
 .program-card__description {
   margin: 0;
   color: var(--color-text-secondary);
   line-height: 1.6;
+  /* Fixed height for 3 lines with truncation */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: calc(1rem * 1.6 * 3);
+}
+
+.program-card__placeholder {
+  visibility: hidden;
 }
 
 .program-card__location {
@@ -52,7 +69,7 @@
 
 .program-card__details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
   background: var(--color-surface);
@@ -94,6 +111,11 @@
   gap: var(--spacing-xs);
   font-size: 0.9rem;
   color: var(--color-text-primary);
+  min-height: 1.25rem;
+}
+
+.program-card__feature--empty {
+  visibility: hidden;
 }
 
 .program-card__feature-icon {
@@ -123,10 +145,11 @@
 
 .program-card--compact .program-card__title {
   font-size: 1.25rem;
+  min-height: calc(1.25rem * 1.3 * 3);
 }
 
 .program-card--compact .program-card__details {
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   padding: var(--spacing-sm);
 }
 
@@ -135,10 +158,6 @@
 }
 
 @media (max-width: 768px) {
-  .program-card__details {
-    grid-template-columns: 1fr 1fr;
-  }
-
   .program-card__actions {
     flex-direction: column;
   }

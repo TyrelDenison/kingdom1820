@@ -229,12 +229,14 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'street address': 'address',
   'street': 'address',
 
-  // City
+  // City (including dot-notation from agent CSV exports)
   'city': 'city',
+  'address.city': 'city',
 
   // State
   'state': 'state',
   'st': 'state',
+  'address.state': 'state',
 
   // Zip
   'zipcode': 'zipCode',
@@ -243,18 +245,21 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'zip': 'zipCode',
   'postal_code': 'zipCode',
   'postal code': 'zipCode',
+  'address.zip': 'zipCode',
 
   // Meeting format
   'meetingformat': 'meetingFormat',
   'meeting_format': 'meetingFormat',
   'meeting format': 'meetingFormat',
   'format': 'meetingFormat',
+  'meeting_details.type': 'meetingFormat',
 
   // Meeting frequency
   'meetingfrequency': 'meetingFrequency',
   'meeting_frequency': 'meetingFrequency',
   'meeting frequency': 'meetingFrequency',
   'frequency': 'meetingFrequency',
+  'meeting_details.frequency': 'meetingFrequency',
 
   // Meeting length
   'meetinglength': 'meetingLength',
@@ -262,6 +267,7 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'meeting length': 'meetingLength',
   'length': 'meetingLength',
   'duration': 'meetingLength',
+  'meeting_details.length': 'meetingLength',
 
   // Meeting type
   'meetingtype': 'meetingType',
@@ -275,12 +281,14 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'average attendance': 'averageAttendance',
   'attendance': 'averageAttendance',
   'avg_attendance': 'averageAttendance',
+  'meeting_details.average_attendance': 'averageAttendance',
 
   // Conferences
   'hasconferences': 'hasConferences',
   'has_conferences': 'hasConferences',
   'has conferences': 'hasConferences',
   'conferences': 'hasConferences',
+  'conference_status': 'hasConferences',
 
   // Outside speakers
   'hasoutsidespeakers': 'hasOutsideSpeakers',
@@ -298,6 +306,7 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'education training': 'hasEducationTraining',
   'training': 'hasEducationTraining',
   'education': 'hasEducationTraining',
+  'training_availability': 'hasEducationTraining',
 
   // Pricing
   'annualprice': 'annualPrice',
@@ -308,6 +317,7 @@ const headerMappings: Record<string, keyof ProgramData> = {
   'monthlyprice': 'monthlyPrice',
   'monthly_price': 'monthlyPrice',
   'monthly price': 'monthlyPrice',
+  'pricing': 'monthlyPrice',
 
   // Contact
   'contactemail': 'contactEmail',
@@ -327,6 +337,46 @@ const headerMappings: Record<string, keyof ProgramData> = {
 }
 
 /**
+ * Parse a pricing string into a numeric value.
+ * Handles formats like "$1,000", "$1,000 - $1,200 per month", "Free", "N/A"
+ * For ranges, returns the lower bound.
+ */
+function parsePricing(value: string): number | null {
+  const lower = value.toLowerCase().trim()
+  if (!lower || lower === 'n/a' || lower === 'na' || lower === 'free') {
+    return 0
+  }
+
+  // Extract dollar amounts - find all $X,XXX patterns
+  const amounts = value.match(/\$[\d,]+(?:\.\d{2})?/g)
+  if (amounts && amounts.length > 0) {
+    // Use the first (lower bound) amount
+    const numStr = amounts[0].replace(/[$,]/g, '')
+    const num = parseFloat(numStr)
+    if (!isNaN(num)) return num
+  }
+
+  // Try plain number
+  const plainNum = parseFloat(value.replace(/[$,]/g, ''))
+  if (!isNaN(plainNum)) return plainNum
+
+  return null
+}
+
+/**
+ * Extract citation URLs from a CSV row's *_citation columns
+ */
+function extractCSVCitations(row: Record<string, string>): string[] {
+  const citations = new Set<string>()
+  for (const [header, value] of Object.entries(row)) {
+    if (header.toLowerCase().endsWith('_citation') && value && value.startsWith('http')) {
+      citations.add(value.trim())
+    }
+  }
+  return Array.from(citations)
+}
+
+/**
  * Convert CSV row to ProgramData
  */
 export function csvRowToProgramData(row: Record<string, string>): ProgramData {
@@ -339,21 +389,62 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
     if (fieldName && value) {
       // Handle type conversions based on field
       switch (fieldName) {
-        case 'meetingLength':
-        case 'averageAttendance':
-        case 'annualPrice':
-        case 'monthlyPrice':
-          const numVal = parseFloat(value)
-          if (!isNaN(numVal)) {
-            program[fieldName] = numVal
+        case 'meetingLength': {
+          // Try numeric first
+          const lengthNum = parseFloat(value)
+          if (!isNaN(lengthNum)) {
+            program[fieldName] = lengthNum
+          } else {
+            // Handle descriptive values like "Full Day (usually 8am - 3pm)", "Half Day"
+            const lengthLower = value.toLowerCase()
+            if (lengthLower.includes('full day')) {
+              program[fieldName] = 7
+            } else if (lengthLower.includes('half day')) {
+              program[fieldName] = 4
+            } else if (lengthLower.includes('hour')) {
+              // Try to extract hours from text like "2 hours"
+              const hourMatch = value.match(/(\d+(?:\.\d+)?)\s*hour/i)
+              if (hourMatch) {
+                program[fieldName] = parseFloat(hourMatch[1])
+              }
+            }
           }
           break
+        }
+
+        case 'averageAttendance': {
+          const attNum = parseFloat(value)
+          if (!isNaN(attNum)) {
+            program[fieldName] = attNum
+          }
+          break
+        }
+
+        case 'annualPrice':
+        case 'monthlyPrice': {
+          // Parse pricing - handle formats like "$1,000 - $1,200 per month"
+          const priceVal = parsePricing(value)
+          if (priceVal !== null) {
+            // If the header was 'pricing' (generic), determine annual vs monthly
+            if (value.toLowerCase().includes('year') || value.toLowerCase().includes('annual')) {
+              program['annualPrice'] = priceVal
+            } else {
+              program[fieldName] = priceVal
+            }
+          }
+          break
+        }
 
         case 'hasOutsideSpeakers':
         case 'hasEducationTraining':
-          // Handle boolean fields
+          // Handle boolean fields - also treat descriptive text as truthy
           const lowerVal = value.toLowerCase()
-          program[fieldName] = ['true', 'yes', '1', 'y'].includes(lowerVal)
+          if (['false', 'no', '0', 'n', 'none', 'n/a', 'na', ''].includes(lowerVal)) {
+            program[fieldName] = false
+          } else {
+            // Any non-empty, non-falsy value (including descriptive text) is truthy
+            program[fieldName] = true
+          }
           break
 
         case 'religiousAffiliation':
@@ -366,7 +457,7 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
           }
           break
 
-        case 'meetingFormat':
+        case 'meetingFormat': {
           // Normalize meeting format
           const format = value.toLowerCase()
           if (format.includes('both') || format.includes('hybrid')) {
@@ -375,8 +466,22 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
             program[fieldName] = 'online'
           } else if (format.includes('in-person') || format.includes('in person') || format.includes('person')) {
             program[fieldName] = 'in-person'
+          } else {
+            // Value doesn't describe a format (e.g. "Peer Advisory Round Table",
+            // "Confidential Forum") — treat it as meetingType instead
+            const mtype = format
+            if (mtype.includes('peer') || mtype.includes('round table') || mtype.includes('team') || mtype.includes('group') || mtype.includes('connect')) {
+              program['meetingType'] = 'peer-group'
+            } else if (mtype.includes('forum') || mtype.includes('advisor') || mtype.includes('speaker') || mtype.includes('q&a')) {
+              program['meetingType'] = 'forum'
+            } else if (mtype.includes('small') || mtype.includes('discussion') || mtype.includes('gathering') || mtype.includes('networking') || mtype.includes('mixer')) {
+              program['meetingType'] = 'small-group'
+            }
+            // Default to in-person when value exists but isn't a recognized format
+            program[fieldName] = 'in-person'
           }
           break
+        }
 
         case 'meetingFrequency':
           // Normalize meeting frequency
@@ -387,6 +492,9 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
             program[fieldName] = 'monthly'
           } else if (freq.includes('quarter')) {
             program[fieldName] = 'quarterly'
+          } else if (/\b(first|second|third|fourth|last|1st|2nd|3rd|4th)\b.*\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(value)) {
+            // Patterns like "Fourth Tuesday", "Third Thursday" indicate monthly meetings
+            program[fieldName] = 'monthly'
           }
           break
 
@@ -429,6 +537,11 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
     }
   }
 
+  // Default meetingType to 'peer-group' if not set (Payload requires it)
+  if (!program['meetingType']) {
+    program['meetingType'] = 'peer-group'
+  }
+
   return program as ProgramData
 }
 
@@ -445,9 +558,7 @@ export function validateProgramData(program: ProgramData, rowNumber: number): st
   if (!program.religiousAffiliation) {
     errors.push('Missing or invalid religiousAffiliation (must be "protestant" or "catholic")')
   }
-  if (!program.address) {
-    errors.push('Missing required field: address')
-  }
+  // address is optional for CSV imports (may not have street address)
   if (!program.city) {
     errors.push('Missing required field: city')
   }
@@ -456,20 +567,13 @@ export function validateProgramData(program: ProgramData, rowNumber: number): st
   } else if (!/^[A-Z]{2}$/.test(program.state)) {
     errors.push('State must be a 2-letter code (e.g., CA, NY)')
   }
-  if (!program.zipCode) {
-    errors.push('Missing required field: zipCode')
-  } else if (!/^\d{5}(-\d{4})?$/.test(program.zipCode)) {
+  if (program.zipCode && !/^\d{5}(-\d{4})?$/.test(program.zipCode)) {
     errors.push('Invalid zipCode format (must be 5 digits or 5+4 format)')
   }
   if (!program.meetingFormat) {
     errors.push('Missing or invalid meetingFormat (must be "in-person", "online", or "both")')
   }
-  if (!program.meetingFrequency) {
-    errors.push('Missing or invalid meetingFrequency (must be "weekly", "monthly", or "quarterly")')
-  }
-  if (!program.meetingType) {
-    errors.push('Missing or invalid meetingType (must be "peer-group", "forum", or "small-group")')
-  }
+  // meetingFrequency and meetingType are optional for CSV imports
 
   // Validate using Zod schema for additional checks
   const result = ProgramSchema.safeParse(program)
@@ -520,6 +624,10 @@ export async function importProgramsFromCSV(
       // Convert CSV row to program data
       const programData = csvRowToProgramData(row)
 
+      // Extract citations from *_citation columns
+      const citations = extractCSVCitations(row)
+      const sourceUrl = citations.length > 0 ? JSON.stringify(citations) : undefined
+
       // Validate
       const validationErrors = validateProgramData(programData, rowNumber)
       if (validationErrors.length > 0) {
@@ -536,7 +644,7 @@ export async function importProgramsFromCSV(
       onProgress?.(i + 1, rows.length, programData.name)
 
       // Save program
-      const result = await saveProgram(payload, programData)
+      const result = await saveProgram(payload, programData, sourceUrl)
 
       if (result.action === 'created') {
         stats.created++

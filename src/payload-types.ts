@@ -190,7 +190,7 @@ export interface Program {
   /**
    * Street address
    */
-  address: string;
+  address?: string | null;
   city: string;
   /**
    * Two-letter state code (e.g., CA, NY)

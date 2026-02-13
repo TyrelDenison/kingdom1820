@@ -151,7 +151,7 @@ export const Programs: CollectionConfig = {
     {
       name: 'address',
       type: 'text',
-      required: true,
+      required: false,
       admin: {
         description: 'Street address',
       },

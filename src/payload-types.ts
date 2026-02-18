@@ -196,7 +196,7 @@ export interface Program {
    * Two-letter state code (e.g., CA, NY)
    */
   state: string;
-  zipCode: string;
+  zipCode?: string | null;
   /**
    * Geocoded from address - can be auto-populated
    */
@@ -205,7 +205,7 @@ export interface Program {
     lng?: number | null;
   };
   meetingFormat: 'in-person' | 'online' | 'both';
-  meetingFrequency: 'weekly' | 'monthly' | 'quarterly';
+  meetingFrequency: 'weekly' | 'bi-monthly' | 'monthly' | 'quarterly';
   /**
    * Meeting length in hours (e.g., 1.5, 3, 6)
    */

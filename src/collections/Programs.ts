@@ -180,9 +180,8 @@ export const Programs: CollectionConfig = {
     {
       name: 'zipCode',
       type: 'text',
-      required: true,
-      validate: (val: string) => {
-        if (!/^\d{5}(-\d{4})?$/.test(val)) {
+      validate: (val: string | null | undefined) => {
+        if (val && !/^\d{5}(-\d{4})?$/.test(val)) {
           return 'Please enter a valid ZIP code'
         }
         return true
@@ -231,6 +230,7 @@ export const Programs: CollectionConfig = {
       required: true,
       options: [
         { label: 'Weekly', value: 'weekly' },
+        { label: 'Bi-Monthly', value: 'bi-monthly' },
         { label: 'Monthly', value: 'monthly' },
         { label: 'Quarterly', value: 'quarterly' },
       ],

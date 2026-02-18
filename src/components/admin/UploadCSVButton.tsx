@@ -373,7 +373,7 @@ export const UploadCSVButton: React.FC = () => {
                     <li>state (2-letter code, e.g., CA)</li>
                     <li>zipCode (5 digits)</li>
                     <li>meetingFormat (in-person/online/both)</li>
-                    <li>meetingFrequency (weekly/monthly/quarterly)</li>
+                    <li>meetingFrequency (weekly/bi-monthly/monthly/quarterly)</li>
                     <li>meetingType (peer-group/forum/small-group)</li>
                   </ul>
                   <p style={{ margin: '0 0 8px', fontWeight: 500 }}>Optional columns:</p>

@@ -12,7 +12,7 @@ export interface Program {
   state: string
   zipCode: string
   meetingFormat?: 'in-person' | 'online' | 'both'
-  meetingFrequency?: 'weekly' | 'monthly' | 'quarterly'
+  meetingFrequency?: 'weekly' | 'bi-monthly' | 'monthly' | 'quarterly'
   meetingLength?: '1-2' | '2-4' | '4-8'
   meetingType?: 'peer-group' | 'forum' | 'small-group'
   averageAttendance?: '1-10' | '10-20' | '20-50' | '50-100' | '100+'

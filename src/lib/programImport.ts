@@ -488,10 +488,15 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
           const freq = value.toLowerCase()
           if (freq.includes('week')) {
             program[fieldName] = 'weekly'
+          } else if (freq.includes('bi-month') || freq.includes('bimonth') || freq.includes('every other month') || freq.includes('every 2 month') || freq.includes('twice a month') || freq.includes('2x month') || freq.includes('2x/month')) {
+            program[fieldName] = 'bi-monthly'
           } else if (freq.includes('month')) {
             program[fieldName] = 'monthly'
           } else if (freq.includes('quarter')) {
             program[fieldName] = 'quarterly'
+          } else if (/\b(1st|first)\s+(and|&)\s+(3rd|third)\b/i.test(value) || /\b(2nd|second)\s+(and|&)\s+(4th|fourth)\b/i.test(value)) {
+            // Patterns like "1st and 3rd Thursday" indicate bi-monthly meetings
+            program[fieldName] = 'bi-monthly'
           } else if (/\b(first|second|third|fourth|last|1st|2nd|3rd|4th)\b.*\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i.test(value)) {
             // Patterns like "Fourth Tuesday", "Third Thursday" indicate monthly meetings
             program[fieldName] = 'monthly'

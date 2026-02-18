@@ -19,7 +19,7 @@ export const ProgramSchema = z.object({
   zipCode: z.string().optional(),
   // Note: coordinates will be geocoded server-side from address, not requested from Firecrawl
   meetingFormat: z.enum(['in-person', 'online', 'both']).optional(),
-  meetingFrequency: z.enum(['weekly', 'monthly', 'quarterly']).optional(),
+  meetingFrequency: z.enum(['weekly', 'bi-monthly', 'monthly', 'quarterly']).optional(),
   meetingLength: z.number().min(0).optional(), // Meeting length in hours
   // Note: meetingLengthRange auto-calculated, not requested from Firecrawl
   meetingType: z.enum(['peer-group', 'forum', 'small-group']).optional(),

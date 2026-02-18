@@ -180,6 +180,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
   ]
   const frequencies = [
     { label: 'Weekly', value: 'weekly' },
+    { label: 'Bi-Monthly', value: 'bi-monthly' },
     { label: 'Monthly', value: 'monthly' },
     { label: 'Quarterly', value: 'quarterly' },
   ]

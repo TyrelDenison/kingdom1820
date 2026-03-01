@@ -1,12 +1,95 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ProgramCard, Program } from '@/components/ProgramCard'
 import './programs.css'
 
 interface ProgramsClientProps {
   programs: any[]
 }
+
+export interface FilterState {
+  searchTerm: string
+  selectedState: string
+  selectedFormat: string
+  selectedFrequency: string
+  selectedAffiliation: string
+  selectedMeetingLength: string
+  selectedMeetingType: string
+  selectedAttendance: string
+  selectedConferences: string
+  selectedOutsideSpeakers: string
+  selectedEducationTraining: string
+  selectedAnnualPriceRange: string
+  selectedMonthlyPriceRange: string
+}
+
+export function filterPrograms(programs: any[], filters: FilterState): any[] {
+  return programs.filter((program) => {
+    // Search term filter (name, city, state)
+    if (filters.searchTerm) {
+      const search = filters.searchTerm.toLowerCase()
+      const matchesSearch =
+        program.name?.toLowerCase().includes(search) ||
+        program.city?.toLowerCase().includes(search) ||
+        program.state?.toLowerCase().includes(search)
+
+      if (!matchesSearch) return false
+    }
+
+    if (filters.selectedState && program.state !== filters.selectedState) return false
+
+    if (filters.selectedFormat && program.meetingFormat !== filters.selectedFormat) return false
+
+    if (filters.selectedFrequency && program.meetingFrequency !== filters.selectedFrequency) return false
+
+    if (filters.selectedAffiliation && program.religiousAffiliation !== filters.selectedAffiliation) return false
+
+    if (filters.selectedMeetingLength && program.meetingLengthRange !== filters.selectedMeetingLength) return false
+
+    if (filters.selectedMeetingType && program.meetingType !== filters.selectedMeetingType) return false
+
+    if (filters.selectedAttendance && program.averageAttendanceRange !== filters.selectedAttendance) return false
+
+    if (filters.selectedConferences && program.hasConferences !== filters.selectedConferences) return false
+
+    if (filters.selectedOutsideSpeakers) {
+      const hasOutsideSpeakers = program.hasOutsideSpeakers === true
+      const filterValue = filters.selectedOutsideSpeakers === 'true'
+      if (hasOutsideSpeakers !== filterValue) return false
+    }
+
+    if (filters.selectedEducationTraining) {
+      const hasEducationTraining = program.hasEducationTraining === true
+      const filterValue = filters.selectedEducationTraining === 'true'
+      if (hasEducationTraining !== filterValue) return false
+    }
+
+    if (filters.selectedAnnualPriceRange && program.annualPriceRange !== filters.selectedAnnualPriceRange) return false
+
+    if (filters.selectedMonthlyPriceRange && program.monthlyPriceRange !== filters.selectedMonthlyPriceRange) return false
+
+    return true
+  })
+}
+
+// URL param key mapping
+const URL_KEYS = {
+  searchTerm: 'search',
+  selectedState: 'state',
+  selectedFormat: 'format',
+  selectedFrequency: 'freq',
+  selectedAffiliation: 'affil',
+  selectedMeetingLength: 'length',
+  selectedMeetingType: 'type',
+  selectedAttendance: 'attend',
+  selectedConferences: 'conf',
+  selectedOutsideSpeakers: 'speakers',
+  selectedEducationTraining: 'edu',
+  selectedAnnualPriceRange: 'annPrice',
+  selectedMonthlyPriceRange: 'monPrice',
+} as const
 
 // Help content for each filter
 const filterHelpContent: Record<string, { title: string; content: React.ReactNode }> = {
@@ -152,22 +235,37 @@ function FilterHelpModal({ filterKey, onClose }: {
 }
 
 export function ProgramsClient({ programs }: ProgramsClientProps) {
-  const [searchTerm, setSearchTerm] = useState('')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [openHelp, setOpenHelp] = useState<string | null>(null)
-  const [selectedState, setSelectedState] = useState('')
-  const [selectedFormat, setSelectedFormat] = useState('')
-  const [selectedFrequency, setSelectedFrequency] = useState('')
-  const [selectedAffiliation, setSelectedAffiliation] = useState('')
-  const [selectedMeetingLength, setSelectedMeetingLength] = useState('')
-  const [selectedMeetingType, setSelectedMeetingType] = useState('')
-  const [selectedAttendance, setSelectedAttendance] = useState('')
-  const [selectedConferences, setSelectedConferences] = useState('')
-  const [selectedOutsideSpeakers, setSelectedOutsideSpeakers] = useState('')
-  const [selectedEducationTraining, setSelectedEducationTraining] = useState('')
-  const [selectedAnnualPriceRange, setSelectedAnnualPriceRange] = useState('')
-  const [selectedMonthlyPriceRange, setSelectedMonthlyPriceRange] = useState('')
 
-  // Extract unique values for filters
+  // Read filter values from URL params
+  const searchTerm = searchParams.get(URL_KEYS.searchTerm) ?? ''
+  const selectedState = searchParams.get(URL_KEYS.selectedState) ?? ''
+  const selectedFormat = searchParams.get(URL_KEYS.selectedFormat) ?? ''
+  const selectedFrequency = searchParams.get(URL_KEYS.selectedFrequency) ?? ''
+  const selectedAffiliation = searchParams.get(URL_KEYS.selectedAffiliation) ?? ''
+  const selectedMeetingLength = searchParams.get(URL_KEYS.selectedMeetingLength) ?? ''
+  const selectedMeetingType = searchParams.get(URL_KEYS.selectedMeetingType) ?? ''
+  const selectedAttendance = searchParams.get(URL_KEYS.selectedAttendance) ?? ''
+  const selectedConferences = searchParams.get(URL_KEYS.selectedConferences) ?? ''
+  const selectedOutsideSpeakers = searchParams.get(URL_KEYS.selectedOutsideSpeakers) ?? ''
+  const selectedEducationTraining = searchParams.get(URL_KEYS.selectedEducationTraining) ?? ''
+  const selectedAnnualPriceRange = searchParams.get(URL_KEYS.selectedAnnualPriceRange) ?? ''
+  const selectedMonthlyPriceRange = searchParams.get(URL_KEYS.selectedMonthlyPriceRange) ?? ''
+
+  const updateFilters = (updates: Partial<Record<string, string>>) => {
+    const params = new URLSearchParams(searchParams.toString())
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) params.set(key, value)
+      else params.delete(key)
+    }
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
+
+  // Extract unique values for state dropdown
   const states = useMemo(() => {
     const stateSet = new Set(programs.map(p => p.state).filter(Boolean))
     return Array.from(stateSet).sort()
@@ -236,106 +334,30 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
     { label: '$701+', value: '701+' },
   ]
 
-  // Filter programs based on search and filters
-  const filteredPrograms = useMemo(() => {
-    return programs.filter((program) => {
-      // Search term filter (name, city, description)
-      if (searchTerm) {
-        const search = searchTerm.toLowerCase()
-        const matchesSearch =
-          program.name?.toLowerCase().includes(search) ||
-          program.city?.toLowerCase().includes(search) ||
-          program.state?.toLowerCase().includes(search)
+  const filters: FilterState = {
+    searchTerm,
+    selectedState,
+    selectedFormat,
+    selectedFrequency,
+    selectedAffiliation,
+    selectedMeetingLength,
+    selectedMeetingType,
+    selectedAttendance,
+    selectedConferences,
+    selectedOutsideSpeakers,
+    selectedEducationTraining,
+    selectedAnnualPriceRange,
+    selectedMonthlyPriceRange,
+  }
 
-        if (!matchesSearch) return false
-      }
-
-      // State filter
-      if (selectedState && program.state !== selectedState) {
-        return false
-      }
-
-      // Format filter
-      if (selectedFormat && program.meetingFormat !== selectedFormat) {
-        return false
-      }
-
-      // Frequency filter
-      if (selectedFrequency && program.meetingFrequency !== selectedFrequency) {
-        return false
-      }
-
-      // Religious affiliation filter
-      if (selectedAffiliation && program.religiousAffiliation !== selectedAffiliation) {
-        return false
-      }
-
-      // Meeting length filter (uses range field)
-      if (selectedMeetingLength && program.meetingLengthRange !== selectedMeetingLength) {
-        return false
-      }
-
-      // Meeting type filter
-      if (selectedMeetingType && program.meetingType !== selectedMeetingType) {
-        return false
-      }
-
-      // Average attendance filter (uses range field)
-      if (selectedAttendance && program.averageAttendanceRange !== selectedAttendance) {
-        return false
-      }
-
-      // Conferences filter
-      if (selectedConferences && program.hasConferences !== selectedConferences) {
-        return false
-      }
-
-      // Outside speakers filter
-      if (selectedOutsideSpeakers) {
-        const hasOutsideSpeakers = program.hasOutsideSpeakers === true
-        const filterValue = selectedOutsideSpeakers === 'true'
-        if (hasOutsideSpeakers !== filterValue) {
-          return false
-        }
-      }
-
-      // Education training filter
-      if (selectedEducationTraining) {
-        const hasEducationTraining = program.hasEducationTraining === true
-        const filterValue = selectedEducationTraining === 'true'
-        if (hasEducationTraining !== filterValue) {
-          return false
-        }
-      }
-
-      // Annual price range filter
-      if (selectedAnnualPriceRange && program.annualPriceRange !== selectedAnnualPriceRange) {
-        return false
-      }
-
-      // Monthly price range filter
-      if (selectedMonthlyPriceRange && program.monthlyPriceRange !== selectedMonthlyPriceRange) {
-        return false
-      }
-
-      return true
-    })
-  }, [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation, selectedMeetingLength, selectedMeetingType, selectedAttendance, selectedConferences, selectedOutsideSpeakers, selectedEducationTraining, selectedAnnualPriceRange, selectedMonthlyPriceRange])
+  const filteredPrograms = useMemo(
+    () => filterPrograms(programs, filters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [programs, searchTerm, selectedState, selectedFormat, selectedFrequency, selectedAffiliation, selectedMeetingLength, selectedMeetingType, selectedAttendance, selectedConferences, selectedOutsideSpeakers, selectedEducationTraining, selectedAnnualPriceRange, selectedMonthlyPriceRange],
+  )
 
   const handleClearFilters = () => {
-    setSearchTerm('')
-    setSelectedState('')
-    setSelectedFormat('')
-    setSelectedFrequency('')
-    setSelectedAffiliation('')
-    setSelectedMeetingLength('')
-    setSelectedMeetingType('')
-    setSelectedAttendance('')
-    setSelectedConferences('')
-    setSelectedOutsideSpeakers('')
-    setSelectedEducationTraining('')
-    setSelectedAnnualPriceRange('')
-    setSelectedMonthlyPriceRange('')
+    router.replace(pathname, { scroll: false })
   }
 
   const activeFiltersCount = [
@@ -392,7 +414,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 className="filter-input"
                 placeholder="Search by name or location..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.searchTerm]: e.target.value })}
               />
             </div>
 
@@ -405,7 +427,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="state"
                 className="filter-select"
                 value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedState]: e.target.value })}
               >
                 <option value="">All States</option>
                 {states.map((state) => (
@@ -426,7 +448,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="format"
                 className="filter-select"
                 value={selectedFormat}
-                onChange={(e) => setSelectedFormat(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedFormat]: e.target.value })}
               >
                 <option value="">All Formats</option>
                 {formats.map((format) => (
@@ -447,7 +469,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="frequency"
                 className="filter-select"
                 value={selectedFrequency}
-                onChange={(e) => setSelectedFrequency(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedFrequency]: e.target.value })}
               >
                 <option value="">All Frequencies</option>
                 {frequencies.map((frequency) => (
@@ -467,7 +489,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="affiliation"
                 className="filter-select"
                 value={selectedAffiliation}
-                onChange={(e) => setSelectedAffiliation(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedAffiliation]: e.target.value })}
               >
                 <option value="">All Affiliations</option>
                 {affiliations.map((affiliation) => (
@@ -487,7 +509,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="meetingLength"
                 className="filter-select"
                 value={selectedMeetingLength}
-                onChange={(e) => setSelectedMeetingLength(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedMeetingLength]: e.target.value })}
               >
                 <option value="">All Lengths</option>
                 {meetingLengths.map((length) => (
@@ -508,7 +530,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="meetingType"
                 className="filter-select"
                 value={selectedMeetingType}
-                onChange={(e) => setSelectedMeetingType(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedMeetingType]: e.target.value })}
               >
                 <option value="">All Types</option>
                 {meetingTypes.map((type) => (
@@ -528,7 +550,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="attendance"
                 className="filter-select"
                 value={selectedAttendance}
-                onChange={(e) => setSelectedAttendance(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedAttendance]: e.target.value })}
               >
                 <option value="">All Sizes</option>
                 {attendanceSizes.map((size) => (
@@ -548,7 +570,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="conferences"
                 className="filter-select"
                 value={selectedConferences}
-                onChange={(e) => setSelectedConferences(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedConferences]: e.target.value })}
               >
                 <option value="">Any</option>
                 {conferenceOptions.map((option) => (
@@ -568,7 +590,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="outsideSpeakers"
                 className="filter-select"
                 value={selectedOutsideSpeakers}
-                onChange={(e) => setSelectedOutsideSpeakers(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedOutsideSpeakers]: e.target.value })}
               >
                 <option value="">Any</option>
                 {booleanOptions.map((option) => (
@@ -589,7 +611,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="educationTraining"
                 className="filter-select"
                 value={selectedEducationTraining}
-                onChange={(e) => setSelectedEducationTraining(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedEducationTraining]: e.target.value })}
               >
                 <option value="">Any</option>
                 {booleanOptions.map((option) => (
@@ -609,7 +631,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="annualPriceRange"
                 className="filter-select"
                 value={selectedAnnualPriceRange}
-                onChange={(e) => setSelectedAnnualPriceRange(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedAnnualPriceRange]: e.target.value })}
               >
                 <option value="">Any</option>
                 {annualPriceRanges.map((range) => (
@@ -629,7 +651,7 @@ export function ProgramsClient({ programs }: ProgramsClientProps) {
                 id="monthlyPriceRange"
                 className="filter-select"
                 value={selectedMonthlyPriceRange}
-                onChange={(e) => setSelectedMonthlyPriceRange(e.target.value)}
+                onChange={(e) => updateFilters({ [URL_KEYS.selectedMonthlyPriceRange]: e.target.value })}
               >
                 <option value="">Any</option>
                 {monthlyPriceRanges.map((range) => (

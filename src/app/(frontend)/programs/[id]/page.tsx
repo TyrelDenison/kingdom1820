@@ -4,6 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 
 import config from '@/payload.config'
+import { BackButton } from './BackButton'
 import './program-detail.css'
 
 interface ProgramDetailPageProps {
@@ -212,9 +213,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                   </a>
                 )}
 
-                <Link href="/programs" className="btn btn-secondary btn-full">
-                  Back to Programs
-                </Link>
+                <BackButton />
               </div>
             </aside>
           </div>

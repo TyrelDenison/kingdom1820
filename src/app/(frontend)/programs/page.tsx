@@ -1,5 +1,5 @@
 import { getPayload } from 'payload'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 import config from '@/payload.config'
 import { ProgramsClient } from './ProgramsClient'
@@ -8,10 +8,10 @@ export default async function ProgramsPage() {
   const payloadConfig = await config
   const payload = await getPayload({ config: payloadConfig })
 
-  // Fetch all published programs
+  // Fetch all published programs (no limit)
   const { docs: programs } = await payload.find({
     collection: 'programs',
-    limit: 100,
+    pagination: false,
     sort: 'name',
     where: {
       _status: {
@@ -20,5 +20,9 @@ export default async function ProgramsPage() {
     },
   })
 
-  return <ProgramsClient programs={programs} />
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProgramsClient programs={programs} />
+    </Suspense>
+  )
 }

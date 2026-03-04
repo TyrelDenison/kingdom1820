@@ -58,8 +58,8 @@ export const AgentPrompts: CollectionConfig = {
             )
           }
 
-          // Execute the agent prompt
-          const result = await runAgentPrompt(promptId)
+          // Execute the agent prompt using the current request's payload instance
+          const result = await runAgentPrompt(promptId, req.payload)
 
           return Response.json(result)
         } catch (error) {

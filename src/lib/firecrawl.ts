@@ -140,7 +140,8 @@ export class FirecrawlService {
       console.error('ERROR: Expected data.programs array, got:', typeof data.programs)
       console.error('ERROR: Full data object:', JSON.stringify(data, null, 2))
       console.error('ERROR: All keys in data:', Object.keys(data))
-      throw new Error('No programs data returned from agent')
+      const dataPreview = JSON.stringify(data).substring(0, 1000)
+      throw new Error(`No programs data returned from agent. Keys: [${Object.keys(data).join(', ')}]. Data: ${dataPreview}`)
     }
 
     // Extract citations for each program

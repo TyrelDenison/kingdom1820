@@ -92,7 +92,7 @@ export class FirecrawlService {
 
     const result = await this.client.agent({
       prompt,
-      schema: responseSchema as any, // Type assertion needed for Zod schema compatibility
+      schema: responseSchema as any, // SDK uses its own bundled Zod types; cast needed for version mismatch
       pollInterval: 2, // Poll every 2 seconds
       // No timeout - let Firecrawl complete the job naturally
       ...(maxCredits && { maxCredits }),
@@ -128,23 +128,43 @@ export class FirecrawlService {
     console.log('DEBUG: Agent data keys:', Object.keys(result.data as any))
     console.log('DEBUG: Agent data:', JSON.stringify(result.data, null, 2))
 
-    // Parse the data - it should match our schema
-    const data = result.data as { programs?: Array<ProgramData & Record<string, any>> }
+    // Parse the data - find the programs array regardless of what key the agent used.
+    // The agent is AI-powered and may use semantic synonyms (e.g. 'groups', 'organizations')
+    // instead of the schema key name 'programs'.
+    const data = result.data as Record<string, any>
 
-    console.log('DEBUG: data.programs exists?:', 'programs' in (result.data as any))
-    console.log('DEBUG: data.programs type:', typeof data.programs)
-    console.log('DEBUG: data.programs is array?:', Array.isArray(data.programs))
-    console.log('DEBUG: data.programs length:', data.programs?.length)
+    const PROGRAM_ARRAY_KEYS = ['programs', 'groups', 'organizations', 'results', 'data', 'items']
 
-    if (!data.programs || !Array.isArray(data.programs)) {
-      console.error('ERROR: Expected data.programs array, got:', typeof data.programs)
-      console.error('ERROR: Full data object:', JSON.stringify(data, null, 2))
-      console.error('ERROR: All keys in data:', Object.keys(data))
-      throw new Error('No programs data returned from agent')
+    let programs: Array<ProgramData & Record<string, any>> | undefined
+
+    // Try known keys in preference order first
+    for (const key of PROGRAM_ARRAY_KEYS) {
+      if (Array.isArray(data[key]) && data[key].length > 0) {
+        if (key !== 'programs') {
+          console.log(`DEBUG: Schema key 'programs' not found, using '${key}' instead`)
+        }
+        programs = data[key]
+        break
+      }
+    }
+
+    // Fall back to any array with content
+    if (!programs) {
+      const fallbackKey = Object.keys(data).find((key) => Array.isArray(data[key]) && data[key].length > 0)
+      if (fallbackKey) {
+        console.log(`DEBUG: Using fallback key '${fallbackKey}' for programs array`)
+        programs = data[fallbackKey]
+      }
+    }
+
+    if (!programs || !Array.isArray(programs)) {
+      console.error('ERROR: No programs array found in agent response. Keys:', Object.keys(data))
+      const dataPreview = JSON.stringify(data).substring(0, 1000)
+      throw new Error(`No programs data returned from agent. Keys: [${Object.keys(data).join(', ')}]. Data: ${dataPreview}`)
     }
 
     // Extract citations for each program
-    return data.programs.map((program) => ({
+    return programs.map((program) => ({
       ...program,
       citations: extractCitations(program),
     }))

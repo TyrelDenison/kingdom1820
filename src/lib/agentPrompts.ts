@@ -2,12 +2,9 @@
  * Agent Prompt utility for running Firecrawl agent prompts and saving programs
  */
 
-import { getPayload } from 'payload'
-import config from '@/payload.config'
+import type { BasePayload } from 'payload'
 import { getFirecrawlService, type ProgramData } from './firecrawl'
 import { convertToRichText } from './programImport'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
 
 export interface RunAgentPromptResult {
   total: number
@@ -19,43 +16,13 @@ export interface RunAgentPromptResult {
 }
 
 /**
- * Save Firecrawl response to file for debugging
- */
-async function saveFirecrawlResponse(programs: Array<ProgramData & { citations: string[] }>, promptId: number) {
-  try {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-    const debugDir = path.join(process.cwd(), 'debug-logs')
-
-    // Create debug directory if it doesn't exist
-    await mkdir(debugDir, { recursive: true })
-
-    const filename = `firecrawl-response-prompt-${promptId}-${timestamp}.json`
-    const filepath = path.join(debugDir, filename)
-
-    const data = {
-      timestamp: new Date().toISOString(),
-      promptId,
-      totalPrograms: programs.length,
-      programs,
-    }
-
-    await writeFile(filepath, JSON.stringify(data, null, 2), 'utf-8')
-    console.log(`📝 Saved Firecrawl response to: ${filepath}`)
-  } catch (error) {
-    console.error('Failed to save Firecrawl response to file:', error)
-    // Don't throw - this is just for debugging
-  }
-}
-
-/**
  * Run an agent prompt and save the resulting programs to the database
  *
  * @param promptId - The ID of the agent prompt to run
+ * @param payload - The Payload instance from the current request context
  * @returns Statistics about the programs created/updated
  */
-export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptResult> {
-  const payload = await getPayload({ config })
-
+export async function runAgentPrompt(promptId: number, payload: BasePayload): Promise<RunAgentPromptResult> {
   // Fetch the prompt
   const prompt = await payload.findByID({
     collection: 'agent-prompts',
@@ -92,12 +59,15 @@ export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptRe
     stats.total = programs.length
     console.log(`Agent returned ${programs.length} programs`)
 
-    // Save raw response to file for debugging
-    await saveFirecrawlResponse(programs, promptId)
-
     // Process each program
     for (const programData of programs) {
       try {
+        // Validate required fields before attempting dedupe or save
+        if (!programData.name || !programData.city || !programData.state) {
+          const missing = ['name', 'city', 'state'].filter((f) => !programData[f as keyof typeof programData])
+          throw new Error(`Missing required fields: ${missing.join(', ')}`)
+        }
+
         // Check if program already exists (by name + city + state)
         const existing = await payload.find({
           collection: 'programs',
@@ -149,7 +119,6 @@ export async function runAgentPrompt(promptId: number): Promise<RunAgentPromptRe
           error: errorMessage,
         })
 
-        // Store the full program data for skipped programs
         stats.skippedPrograms!.push({
           ...programData,
           skipReason: errorMessage,

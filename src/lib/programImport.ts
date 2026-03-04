@@ -520,6 +520,8 @@ export function csvRowToProgramData(row: Record<string, string>): ProgramData {
           const conf = value.toLowerCase()
           if (conf.includes('multiple') || conf.includes('many')) {
             program[fieldName] = 'multiple'
+          } else if (conf === 'none' || conf === 'false' || conf === 'no' || conf === '0' || conf === 'n') {
+            program[fieldName] = 'none'
           } else if (conf.includes('annual') || conf.includes('yearly') || conf.includes('one') || ['true', 'yes', '1', 'y'].includes(conf)) {
             program[fieldName] = 'annual'
           } else {

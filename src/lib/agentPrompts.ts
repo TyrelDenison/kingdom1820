@@ -62,6 +62,12 @@ export async function runAgentPrompt(promptId: number, payload: BasePayload): Pr
     // Process each program
     for (const programData of programs) {
       try {
+        // Validate required fields before attempting dedupe or save
+        if (!programData.name || !programData.city || !programData.state) {
+          const missing = ['name', 'city', 'state'].filter((f) => !programData[f as keyof typeof programData])
+          throw new Error(`Missing required fields: ${missing.join(', ')}`)
+        }
+
         // Check if program already exists (by name + city + state)
         const existing = await payload.find({
           collection: 'programs',

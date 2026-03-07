@@ -83,6 +83,13 @@ export const Programs: CollectionConfig = {
       name: 'description',
       type: 'richText',
     },
+    {
+      name: 'insights',
+      type: 'richText',
+      admin: {
+        description: 'Internal insights or notes about this program',
+      },
+    },
 
     // Related Programs
     {

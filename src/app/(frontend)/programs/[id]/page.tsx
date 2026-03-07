@@ -46,6 +46,7 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
     }
 
     const description = extractTextFromRichText(program.description)
+    const insights = extractTextFromRichText(program.insights)
 
     return (
       <div className="program-detail-page">
@@ -89,6 +90,13 @@ export default async function ProgramDetailPage({ params }: ProgramDetailPagePro
                 <section className="program-section">
                   <h2 className="section-title">About This Program</h2>
                   <p className="program-description">{description}</p>
+                </section>
+              )}
+
+              {insights && (
+                <section className="program-section">
+                  <h2 className="section-title">Insights</h2>
+                  <p className="program-description">{insights}</p>
                 </section>
               )}
 

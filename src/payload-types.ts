@@ -183,6 +183,24 @@ export interface Program {
     [k: string]: unknown;
   } | null;
   /**
+   * Internal insights or notes about this program
+   */
+  insights?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
    * Connect programs that are part of the same network or organization
    */
   relatedPrograms?: (number | Program)[] | null;
@@ -420,6 +438,7 @@ export interface MediaSelect<T extends boolean = true> {
 export interface ProgramsSelect<T extends boolean = true> {
   name?: T;
   description?: T;
+  insights?: T;
   relatedPrograms?: T;
   religiousAffiliation?: T;
   address?: T;

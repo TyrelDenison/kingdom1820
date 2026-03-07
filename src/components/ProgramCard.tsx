@@ -19,6 +19,8 @@ export interface Program {
   hasConferences?: 'none' | 'annual' | 'multiple'
   hasOutsideSpeakers?: boolean
   hasEducationTraining?: boolean
+  annualPrice?: number
+  monthlyPrice?: number
   contactEmail?: string
   contactPhone?: string
   website?: string
@@ -68,6 +70,25 @@ function formatMeetingType(type?: string): string {
 function capitalize(str?: string): string {
   if (!str) return '—'
   return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
+// Helper to format meeting length display value
+function formatMeetingLength(length?: string): string {
+  if (!length) return '—'
+  return `${length} hrs`
+}
+
+// Helper to format boolean fields as Yes/No
+function formatBool(value?: boolean): string {
+  if (value === undefined || value === null) return '—'
+  return value ? 'Yes' : 'No'
+}
+
+// Helper to format price fields
+function formatPrice(value?: number): string {
+  if (value === undefined || value === null) return '—'
+  if (value === 0) return 'Free'
+  return `$${value.toLocaleString()}`
 }
 
 export function ProgramCard({ program, variant = 'default' }: ProgramCardProps) {
@@ -121,32 +142,55 @@ export function ProgramCard({ program, variant = 'default' }: ProgramCardProps) 
             {program.averageAttendance || '—'}
           </span>
         </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Length:</span>
+          <span className="program-card__detail-value">
+            {formatMeetingLength(program.meetingLength)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Conferences:</span>
+          <span className="program-card__detail-value">
+            {capitalize(program.hasConferences)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Outside Speakers:</span>
+          <span className="program-card__detail-value">
+            {formatBool(program.hasOutsideSpeakers)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Education & Training:</span>
+          <span className="program-card__detail-value">
+            {formatBool(program.hasEducationTraining)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Annual Price:</span>
+          <span className="program-card__detail-value">
+            {formatPrice(program.annualPrice)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Monthly Price:</span>
+          <span className="program-card__detail-value">
+            {formatPrice(program.monthlyPrice)}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Email:</span>
+          <span className="program-card__detail-value">
+            {program.contactEmail || '—'}
+          </span>
+        </div>
+        <div className="program-card__detail-item">
+          <span className="program-card__detail-label">Phone:</span>
+          <span className="program-card__detail-value">
+            {program.contactPhone || '—'}
+          </span>
+        </div>
       </div>
-
-      {variant === 'default' && (
-        <ul className="program-card__features">
-          <li className={!program.hasConferences || program.hasConferences === 'none' ? 'program-card__feature--empty' : ''}>
-            <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {program.hasConferences && program.hasConferences !== 'none'
-              ? `Conferences: ${capitalize(program.hasConferences)}`
-              : <span>&nbsp;</span>}
-          </li>
-          <li className={!program.hasOutsideSpeakers ? 'program-card__feature--empty' : ''}>
-            <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {program.hasOutsideSpeakers ? 'Features outside speakers' : <span>&nbsp;</span>}
-          </li>
-          <li className={!program.hasEducationTraining ? 'program-card__feature--empty' : ''}>
-            <svg className="program-card__feature-icon" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {program.hasEducationTraining ? 'Offers education and training' : <span>&nbsp;</span>}
-          </li>
-        </ul>
-      )}
 
       <div className="program-card__actions">
         <Link href={`/programs/${program.id}`} className="btn btn-primary">

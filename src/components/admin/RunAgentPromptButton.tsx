@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { Button } from '@payloadcms/ui'
+import React, { useState, useEffect, useRef } from 'react'
+import { Button, useField } from '@payloadcms/ui'
 import { useRouter } from 'next/navigation'
 import { useDocumentInfo } from '@payloadcms/ui'
 
@@ -9,19 +9,15 @@ export const RunAgentPromptButton: React.FC = () => {
   const { id } = useDocumentInfo()
   const router = useRouter()
   const [isRunning, setIsRunning] = useState(false)
-  const [status, setStatus] = useState<string>('')
+  const { value: status } = useField<string>({ path: 'status' })
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Fetch current document status
+  // Cancel any in-flight execute request when the component unmounts (page navigation/refresh)
   useEffect(() => {
-    const fetchStatus = async () => {
-      if (id) {
-        const response = await fetch(`/api/agent-prompts/${id}`)
-        const data = await response.json() as { status: string }
-        setStatus(data.status)
-      }
+    return () => {
+      abortControllerRef.current?.abort()
     }
-    fetchStatus()
-  }, [id])
+  }, [])
 
   const handleRun = async () => {
     if (status !== 'active') {
@@ -29,10 +25,12 @@ export const RunAgentPromptButton: React.FC = () => {
       return
     }
 
+    abortControllerRef.current = new AbortController()
     setIsRunning(true)
     try {
       const response = await fetch(`/api/agent-prompts/${id}/execute`, {
         method: 'POST',
+        signal: abortControllerRef.current.signal,
       })
 
       if (!response.ok) {
@@ -57,6 +55,8 @@ export const RunAgentPromptButton: React.FC = () => {
 
       router.refresh()
     } catch (error) {
+      // Silently ignore aborts — user navigated away intentionally
+      if (error instanceof Error && error.name === 'AbortError') return
       alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setIsRunning(false)

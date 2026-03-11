@@ -94,14 +94,27 @@ function normaliseState(val: unknown): string | undefined {
   return stateMap[str.toLowerCase()] ?? undefined
 }
 
+// Values that are not valid city names — agent sometimes puts these when no physical location exists
+const INVALID_CITY_VALUES = new Set([
+  'online', 'virtual', 'remote', 'nationwide', 'national', 'statewide',
+  'n/a', 'na', 'none', 'unknown', 'various', 'multiple', 'tbd', 'tba',
+  'not available', 'not specified', 'not applicable',
+])
+
 /** Extract a usable primary city name from a potentially verbose string */
 function extractPrimaryCity(val: unknown): string | undefined {
   if (!val) return undefined
   const str = String(val).trim()
+
+  // Reject known non-city values
+  if (INVALID_CITY_VALUES.has(str.toLowerCase())) return undefined
+
   // Short and clean — use as-is after stripping metro/area suffixes
   if (str.length <= 40 && !/multiple|various|locations|cities/i.test(str)) {
     const cleaned = str.replace(/\s*(metro(?:plex)?|area|region|county)\s*$/i, '').trim()
-    return cleaned || undefined
+    // Final check: reject if cleaned value is itself invalid
+    if (cleaned && !INVALID_CITY_VALUES.has(cleaned.toLowerCase())) return cleaned
+    return undefined
   }
   // Longer but clean after stripping suffix (e.g. "Dallas metroplex")
   const suffixStripped = str.replace(/\s*(metro(?:plex)?|area|region|county)\s*$/i, '').trim()
